@@ -2677,7 +2677,7 @@
       el.innerHTML = recent.map(n => `
     <div class="notification-item">
       <span class="notif-type">[${n.type || '?'}]</span>
-      <span class="notif-from" onclick="navigate('profile',{user:'${n.from}'})">@${n.from || '?'}</span>
+      <span class="notif-from" onclick="navigate('profile',{user:'${escHtml(escJS(n.from))}'})">@${escHtml(n.from || '?')}</span>
       ${n.type === 'poke' ? ' poked you!' : n.type === 'follow' ? ' followed you' : n.type === 'mention' ? ' mentioned you' : ''}
     </div>`).join('');
     }
@@ -2954,7 +2954,7 @@
       const el = document.getElementById('messages');
       el.innerHTML = msgs.map(m => {
         if (m.type === 'system') return `<div class="message system">*** ${escHtml(m.body)} ***</div>`;
-        return `<div class="message"><span class="msg-time">[${new Date(m.ts).toTimeString().slice(0, 5)}]</span> <span class="msg-author" onclick="navigate('profile',{user:'${m.author}'})">&lt;${m.author}&gt;</span><span class="msg-body"> ${escHtml(m.body || '')}</span></div>`;
+        return `<div class="message"><span class="msg-time">[${new Date(m.ts).toTimeString().slice(0, 5)}]</span> <span class="msg-author" onclick="navigate('profile',{user:'${escHtml(escJS(m.author))}'})">&lt;${escHtml(m.author)}&gt;</span><span class="msg-body"> ${escHtml(m.body || '')}</span></div>`;
       }).join('');
       el.scrollTop = el.scrollHeight;
     }
@@ -3058,10 +3058,10 @@
         return;
       }
       const listHtml = items.map(m => `
-    <div class="mail-item ${m.read ? '' : 'unread'}" onclick="openMail('${m.id}','${currentMailFolder}')">
+    <div class="mail-item ${m.read ? '' : 'unread'}" onclick="openMail('${escHtml(escJS(m.id))}','${currentMailFolder}')">
       <div class="mail-item-subject">${escHtml(m.subject || '(no subject)')}</div>
       <div class="mail-item-meta">
-        <span>${currentMailFolder === 'inbox' ? 'FROM: @' + (m.from || '?') : 'TO: @' + (m.to || '?')}</span>
+        <span>${currentMailFolder === 'inbox' ? 'FROM: @' + escHtml(m.from || '?') : 'TO: @' + escHtml(m.to || '?')}</span>
         <span>${timeAgo(m.ts)}</span>
       </div>
       <div class="mail-item-preview">${escHtml((m.body || '').slice(0, 80))}</div>
@@ -3081,11 +3081,11 @@
       <div style="margin-bottom:12px;"><button class="btn-sm" onclick="renderMailList()">← BACK</button></div>
       <div class="mail-read-header">
         <h2>${escHtml(mail.subject || '(no subject)')}</h2>
-        <div class="mail-read-meta">FROM: @${mail.from || '?'} · TO: @${mail.to || '?'} · ${timeAgo(mail.ts)}</div>
+        <div class="mail-read-meta">FROM: @${escHtml(mail.from || '?')} · TO: @${escHtml(mail.to || '?')} · ${timeAgo(mail.ts)}</div>
       </div>
       <div class="mail-read-body">${escHtml(mail.body || '')}</div>
       <div style="margin-top:16px;display:flex;gap:8px;">
-        ${folder === 'inbox' ? `<button class="btn-sm" onclick="showComposeMail('${mail.from}','Re: ${escHtml(mail.subject || '')}')">REPLY</button>` : ''}
+        ${folder === 'inbox' ? `<button class="btn-sm" onclick="showComposeMail('${escHtml(escJS(mail.from))}','Re: ${escHtml(escJS(mail.subject))}')">REPLY</button>` : ''}
       </div>
     </div>`;
     }
@@ -3422,7 +3422,8 @@
       if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
       return Math.floor(diff / 86400000) + 'd ago';
     }
-    function escHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function escHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+    function escJS(str) { return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
     function loadTrending() { }
   </script>
 </body>
