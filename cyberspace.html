@@ -1,0 +1,3430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GUNSPACE // decentralized terminal social</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/lib/then.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/lib/webrtc.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --fg: #33ff33;
+      --fg-dim: #1a8c1a;
+      --fg-bright: #66ff66;
+      --accent: #ff6600;
+      --accent2: #ffcc00;
+      --border: #1a4d1a;
+      --border-bright: #33ff33;
+      --input-bg: #050f05;
+      --overlay: rgba(0, 10, 0, 0.92);
+      --scanline: rgba(0, 0, 0, 0.15);
+      --glow: 0 0 8px rgba(51, 255, 51, 0.4);
+      --glow-strong: 0 0 20px rgba(51, 255, 51, 0.7);
+      --font-main: 'Share Tech Mono', monospace;
+      --font-display: 'VT323', monospace;
+      --font-size: 14px;
+    }
+
+    [data-theme="amber"] {
+      --bg: #0d0800;
+      --fg: #ffb000;
+      --fg-dim: #7a5500;
+      --fg-bright: #ffd066;
+      --accent: #ff6600;
+      --accent2: #ff3300;
+      --border: #3d2800;
+      --border-bright: #ffb000;
+      --input-bg: #080500;
+      --glow: 0 0 8px rgba(255, 176, 0, 0.4);
+      --glow-strong: 0 0 20px rgba(255, 176, 0, 0.7);
+    }
+
+    [data-theme="c64"] {
+      --bg: #3a30c0;
+      --fg: #7869f0;
+      --fg-dim: #5248b0;
+      --fg-bright: #a090ff;
+      --accent: #ffffff;
+      --accent2: #d0c0ff;
+      --border: #5248b0;
+      --border-bright: #a090ff;
+      --input-bg: #2a20a0;
+      --glow: 0 0 0px transparent;
+      --glow-strong: 0 0 0 transparent;
+    }
+
+    [data-theme="matrix"] {
+      --bg: #000000;
+      --fg: #00ff41;
+      --fg-dim: #006616;
+      --fg-bright: #80ff80;
+      --accent: #ffffff;
+      --accent2: #00ccff;
+      --border: #003300;
+      --border-bright: #00ff41;
+      --input-bg: #000500;
+      --glow: 0 0 10px rgba(0, 255, 65, 0.5);
+      --glow-strong: 0 0 25px rgba(0, 255, 65, 0.9);
+    }
+
+    [data-theme="ice"] {
+      --bg: #020812;
+      --fg: #00cfff;
+      --fg-dim: #005577;
+      --fg-bright: #66e5ff;
+      --accent: #ff0088;
+      --accent2: #ff88ff;
+      --border: #003355;
+      --border-bright: #00cfff;
+      --input-bg: #010510;
+      --glow: 0 0 8px rgba(0, 207, 255, 0.4);
+      --glow-strong: 0 0 20px rgba(0, 207, 255, 0.7);
+    }
+
+    [data-theme="paper"] {
+      --bg: #f5f0e8;
+      --fg: #1a1a0a;
+      --fg-dim: #666650;
+      --fg-bright: #000000;
+      --accent: #8b0000;
+      --accent2: #005580;
+      --border: #c8c0a0;
+      --border-bright: #1a1a0a;
+      --input-bg: #ece7d8;
+      --overlay: rgba(245, 240, 232, 0.95);
+      --glow: none;
+      --glow-strong: none;
+      --scanline: transparent;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-main);
+      font-size: var(--font-size);
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      cursor: default;
+      line-height: 1.5;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, var(--scanline) 0px, var(--scanline) 1px, transparent 1px, transparent 3px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.6) 100%);
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0
+      }
+    }
+
+    @keyframes flicker {
+      0% {
+        opacity: 1
+      }
+
+      92% {
+        opacity: 1
+      }
+
+      93% {
+        opacity: 0.9
+      }
+
+      94% {
+        opacity: 1
+      }
+
+      97% {
+        opacity: 0.95
+      }
+
+      100% {
+        opacity: 1
+      }
+    }
+
+    @keyframes scanIn {
+      from {
+        transform: translateY(-6px);
+        opacity: 0
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        text-shadow: var(--glow)
+      }
+
+      50% {
+        text-shadow: var(--glow-strong)
+      }
+    }
+
+    @keyframes slideRight {
+      from {
+        transform: translateX(-12px);
+        opacity: 0
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1
+      }
+    }
+
+    @keyframes eqBar {
+
+      0%,
+      100% {
+        height: 4px
+      }
+
+      50% {
+        height: 20px
+      }
+    }
+
+    #app {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
+      animation: flicker 8s infinite;
+    }
+
+    #topbar {
+      border-bottom: 1px solid var(--border-bright);
+      padding: 4px 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg);
+      box-shadow: 0 1px 0 var(--border-bright), var(--glow);
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    #topbar .logo {
+      font-family: var(--font-display);
+      font-size: 26px;
+      color: var(--fg-bright);
+      text-shadow: var(--glow-strong);
+      letter-spacing: 2px;
+      white-space: nowrap;
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    #topbar .logo span {
+      color: var(--accent);
+    }
+
+    #nav-links {
+      display: flex;
+      gap: 0;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--fg-dim);
+      font-family: var(--font-main);
+      font-size: 13px;
+      padding: 2px 10px;
+      cursor: pointer;
+      border-right: 1px solid var(--border);
+      transition: color 0.1s, background 0.1s;
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover,
+    .nav-btn.active {
+      color: var(--fg-bright);
+      background: var(--input-bg);
+      text-shadow: var(--glow);
+    }
+
+    .nav-btn.active {
+      border-bottom: 1px solid var(--fg-bright);
+    }
+
+    .nav-btn .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: var(--bg);
+      font-size: 10px;
+      padding: 0 4px;
+      margin-left: 4px;
+      border-radius: 2px;
+    }
+
+    #topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    #topbar-right .username {
+      color: var(--accent2);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    #topbar-right .username:hover {
+      text-shadow: var(--glow-strong);
+    }
+
+    .btn-sm {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--fg-dim);
+      font-family: var(--font-main);
+      font-size: 12px;
+      padding: 2px 8px;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .btn-sm:hover {
+      border-color: var(--fg);
+      color: var(--fg);
+    }
+
+    #clock {
+      color: var(--fg-dim);
+      font-size: 12px;
+    }
+
+    #main {
+      display: grid;
+      grid-template-columns: 200px 1fr 180px;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    #sidebar-left,
+    #sidebar-right {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--fg-dim) var(--bg);
+    }
+
+    #sidebar-right {
+      border-right: none;
+      border-left: 1px solid var(--border);
+    }
+
+    #content {
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--fg-dim) var(--bg);
+    }
+
+    .panel-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--fg-bright);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    #statusbar {
+      border-top: 1px solid var(--border-bright);
+      padding: 2px 12px;
+      display: flex;
+      gap: 16px;
+      font-size: 11px;
+      color: var(--fg-dim);
+      flex-shrink: 0;
+      background: var(--input-bg);
+    }
+
+    #statusbar .status-item {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    #statusbar .status-item .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--fg-dim);
+      display: inline-block;
+    }
+
+    #statusbar .status-item .dot.online {
+      background: var(--fg-bright);
+      box-shadow: 0 0 4px var(--fg-bright);
+    }
+
+    #statusbar kbd {
+      border: 1px solid var(--border);
+      padding: 0 4px;
+      font-family: var(--font-main);
+      font-size: 10px;
+      color: var(--fg-dim);
+    }
+
+    /* AUTH */
+    #auth-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .auth-box {
+      border: 1px solid var(--border-bright);
+      padding: 32px 40px;
+      width: 420px;
+      box-shadow: var(--glow-strong);
+      animation: scanIn 0.4s ease-out;
+    }
+
+    .auth-logo {
+      font-family: var(--font-display);
+      font-size: 52px;
+      text-align: center;
+      color: var(--fg-bright);
+      text-shadow: var(--glow-strong);
+      animation: pulse 3s ease-in-out infinite;
+      margin-bottom: 4px;
+    }
+
+    .auth-sub {
+      text-align: center;
+      color: var(--fg-dim);
+      font-size: 12px;
+      margin-bottom: 24px;
+      letter-spacing: 2px;
+    }
+
+    .auth-tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .auth-tab {
+      flex: 1;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--fg-dim);
+      font-family: var(--font-main);
+      font-size: 13px;
+      padding: 6px;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .auth-tab.active {
+      color: var(--fg-bright);
+      border-bottom-color: var(--fg-bright);
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      color: var(--fg-dim);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .form-group input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 0;
+      color: var(--fg);
+      font-family: var(--font-main);
+      font-size: 14px;
+      padding: 6px 10px;
+      outline: none;
+      transition: border-color 0.1s;
+    }
+
+    .form-group input:focus {
+      border-color: var(--fg-bright);
+      box-shadow: var(--glow);
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--fg-dim);
+      border: 1px solid var(--fg-bright);
+      color: var(--bg);
+      font-family: var(--font-main);
+      font-size: 15px;
+      padding: 8px;
+      cursor: pointer;
+      transition: all 0.1s;
+      letter-spacing: 1px;
+    }
+
+    .btn-primary:hover {
+      background: var(--fg-bright);
+      box-shadow: var(--glow-strong);
+    }
+
+    .auth-error {
+      color: var(--accent);
+      font-size: 12px;
+      margin-top: 8px;
+      min-height: 16px;
+      text-align: center;
+    }
+
+    /* FEED */
+    .feed-controls {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      padding: 0 12px;
+      background: var(--input-bg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .feed-tab {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--fg-dim);
+      font-family: var(--font-main);
+      font-size: 13px;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .feed-tab.active {
+      color: var(--fg-bright);
+      border-bottom-color: var(--fg-bright);
+    }
+
+    .feed-tab:hover {
+      color: var(--fg);
+    }
+
+    .compose-area {
+      border-bottom: 1px solid var(--border);
+      padding: 12px;
+      background: var(--input-bg);
+    }
+
+    .compose-area textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      font-family: var(--font-main);
+      font-size: 14px;
+      padding: 8px;
+      resize: none;
+      outline: none;
+      height: 70px;
+      transition: border-color 0.1s;
+    }
+
+    .compose-area textarea:focus {
+      border-color: var(--fg-bright);
+      box-shadow: var(--glow);
+    }
+
+    .compose-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .compose-bottom .char-count {
+      font-size: 11px;
+      color: var(--fg-dim);
+    }
+
+    .compose-bottom .char-count.warn {
+      color: var(--accent);
+    }
+
+    .topics-input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      font-family: var(--font-main);
+      font-size: 12px;
+      padding: 4px 8px;
+      outline: none;
+      width: 180px;
+    }
+
+    .topics-input:focus {
+      border-color: var(--fg-bright);
+    }
+
+    .btn-post {
+      background: none;
+      border: 1px solid var(--fg-bright);
+      color: var(--fg-bright);
+      font-family: var(--font-main);
+      font-size: 13px;
+      padding: 4px 16px;
+      cursor: pointer;
+      transition: all 0.1s;
+      text-shadow: var(--glow);
+    }
+
+    .btn-post:hover {
+      background: var(--fg-bright);
+      color: var(--bg);
+    }
+
+    .post {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      animation: scanIn 0.2s ease-out;
+      cursor: pointer;
+      transition: background 0.1s;
+      position: relative;
+    }
+
+    .post:hover,
+    .post.selected {
+      background: var(--input-bg);
+    }
+
+    .post.selected::before {
+      content: '▶';
+      position: absolute;
+      left: 2px;
+      top: 12px;
+      color: var(--fg-bright);
+      font-size: 10px;
+    }
+
+    .post-header {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+
+    .post-author {
+      color: var(--accent2);
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .post-author:hover {
+      text-shadow: var(--glow-strong);
+      text-decoration: underline;
+    }
+
+    .post-time {
+      color: var(--fg-dim);
+      font-size: 11px;
+    }
+
+    .post-body {
+      color: var(--fg);
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .post-body .mention {
+      color: var(--accent2);
+      cursor: pointer;
+    }
+
+    .post-body .mention:hover {
+      text-decoration: underline;
+    }
+
+    .post-body .hashtag {
+      color: var(--fg-bright);
+      cursor: pointer;
+    }
+
+    .post-body .hashtag:hover {
+      text-decoration: underline;
+    }
+
+    .post-body a {
+      color: var(--fg-dim);
+      font-size: 12px;
+    }
+
+    .post-topics {
+      margin-top: 6px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .topic-tag {
+      font-size: 11px;
+      color: var(--fg-dim);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .topic-tag:hover {
+      color: var(--fg-bright);
+      border-color: var(--fg-bright);
+    }
+
+    .post-actions {
+      display: flex;
+      gap: 14px;
+      margin-top: 6px;
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+
+    .post:hover .post-actions {
+      opacity: 1;
+    }
+
+    .post-action {
+      background: none;
+      border: none;
+      color: var(--fg-dim);
+      font-family: var(--font-main);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.1s;
+    }
+
+    .post-action:hover {
+      color: var(--fg-bright);
+    }
+
+    .post-action.bookmarked {
+      color: var(--accent2);
+    }
+
+    /* MUSIC FEED — grid cards + bottom player */
+    @keyframes eqBar {
+
+      0%,
+      100% {
+        height: 4px
+      }
+
+      50% {
+        height: 20px
+      }
+    }
+
+    .eq-bar {
+      width: 3px;
+      background: var(--fg-bright);
+      border-radius: 1px;
+      animation: eqBar 0.7s ease-in-out infinite;
+      opacity: 0.8;
+    }
+
+    .eq-bar:nth-child(2) {
+      animation-delay: 0.12s;
+    }
+
+    .eq-bar:nth-child(3) {
+      animation-delay: 0.24s;
+    }
+
+    .eq-bar:nth-child(4) {
+      animation-delay: 0.08s;
+    }
+
+    .eq-bar:nth-child(5) {
+      animation-delay: 0.18s;
+    }
+
+    .eq-bar.paused {
+      animation-play-state: paused;
+    }
+
+    .music-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .music-card {
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      position: relative;
+      animation: scanIn 0.2s ease-out;
+      background: var(--input-bg);
+    }
+
+    .music-card:hover {
+      border-color: var(--fg-bright);
+      box-shadow: var(--glow);
+    }
+
+    .music-card.playing {
+      border-color: var(--accent2);
+      box-shadow: 0 0 14px rgba(255, 204, 0, 0.35);
+    }
+
+    .music-card-thumb {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .music-card-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: opacity 0.2s;
+    }
+
+    .music-card:hover .music-card-thumb img,
+    .music-card.playing .music-card-thumb img {
+      opacity: 0.7;
+    }
+
+    .music-card-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .music-card:hover .music-card-overlay,
+    .music-card.playing .music-card-overlay {
+      opacity: 1;
+    }
+
+    .play-btn {
+      width: 42px;
+      height: 42px;
+      border: 2px solid var(--fg-bright);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--fg-bright);
+      font-size: 17px;
+      background: rgba(0, 0, 0, 0.65);
+      transition: all 0.12s;
+    }
+
+    .music-card.playing .play-btn {
+      background: var(--accent2);
+      border-color: var(--accent2);
+      color: var(--bg);
+    }
+
+    .now-playing-badge {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: var(--accent2);
+      color: var(--bg);
+      font-size: 9px;
+      padding: 2px 5px;
+      letter-spacing: 1px;
+      display: none;
+    }
+
+    .music-card.playing .now-playing-badge {
+      display: block;
+    }
+
+    .music-card-eq {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      display: none;
+      align-items: flex-end;
+      gap: 2px;
+      height: 14px;
+    }
+
+    .music-card.playing .music-card-eq {
+      display: flex;
+    }
+
+    .music-card-info {
+      padding: 7px 9px 9px;
+    }
+
+    .music-card-caption {
+      color: var(--fg);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+      line-height: 1.3;
+    }
+
+    .music-card-author {
+      color: var(--accent2);
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .music-card-author:hover {
+      text-decoration: underline;
+    }
+
+    /* BOTTOM PLAYER BAR */
+    #bottom-player {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 58px;
+      background: var(--input-bg);
+      border-top: 2px solid var(--border-bright);
+      display: none;
+      align-items: center;
+      gap: 14px;
+      padding: 0 16px;
+      z-index: 5000;
+      box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    #bottom-player.visible {
+      display: flex;
+    }
+
+    .player-thumb {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .player-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .player-caption {
+      color: var(--fg-bright);
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+    }
+
+    .player-author {
+      color: var(--fg-dim);
+      font-size: 11px;
+    }
+
+    .player-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .player-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--fg-dim);
+      font-family: var(--font-main);
+      font-size: 15px;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      transition: all 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .player-btn:hover {
+      border-color: var(--fg-bright);
+      color: var(--fg-bright);
+    }
+
+    .player-btn.main-play {
+      width: 36px;
+      height: 36px;
+      border-color: var(--fg-bright);
+      color: var(--fg-bright);
+    }
+
+    .player-btn.main-play:hover {
+      background: var(--fg-bright);
+      color: var(--bg);
+    }
+
+    .player-eq {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 16px;
+      margin: 0 4px;
+    }
+
+    .player-close {
+      margin-left: auto;
+      color: var(--fg-dim);
+      font-size: 14px;
+    }
+
+    #yt-hidden {
+      position: fixed;
+      top: -9999px;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #app.has-player #content {
+      padding-bottom: 60px;
+    }
+
+    /* CHAT */
+    #chat-view {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .room-list {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .room-item {
+      padding: 6px 12px;
+      cursor: pointer;
+      color: var(--fg-dim);
+      font-size: 13px;
+      transition: all 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .room-item:hover,
+    .room-item.active {
+      background: var(--input-bg);
+      color: var(--fg-bright);
+    }
+
+    .room-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .room-header {
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--input-bg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .room-header .room-name {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--fg-bright);
+      text-shadow: var(--glow);
+    }
+
+    .room-header .online-count {
+      font-size: 11px;
+      color: var(--fg-dim);
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--fg-dim) var(--bg);
+    }
+
+    .message {
+      font-size: 13px;
+      line-height: 1.5;
+      animation: scanIn 0.15s ease-out;
+      word-break: break-word;
+    }
+
+    .message .msg-time {
+      color: var(--fg-dim);
+      font-size: 11px;
+    }
+
+    .message .msg-author {
+      color: var(--accent2);
+      cursor: pointer;
+    }
+
+    .message .msg-author:hover {
+      text-decoration: underline;
+    }
+
+    .message .msg-body {
+      color: var(--fg);
+    }
+
+    .message.system {
+      color: var(--fg-dim);
+      font-style: italic;
+    }
+
+    .chat-input-area {
+      border-top: 1px solid var(--border);
+      padding: 8px 14px;
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      background: var(--input-bg);
+    }
+
+    .chat-prompt {
+      color: var(--fg-bright);
+      font-size: 14px;
+      padding-top: 1px;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--fg);
+      font-family: var(--font-main);
+      font-size: 14px;
+      outline: none;
+      caret-color: var(--fg-bright);
+    }
+
+    /* MAIL - completely rewritten */
+    #mail-view {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .mail-sidebar {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .mail-folder {
+      padding: 6px 12px;
+      cursor: pointer;
+      color: var(--fg-dim);
+      font-size: 13px;
+      transition: all 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mail-folder:hover,
+    .mail-folder.active {
+      background: var(--input-bg);
+      color: var(--fg-bright);
+    }
+
+    .mail-folder .unread-count {
+      margin-left: auto;
+      color: var(--accent);
+      font-size: 11px;
+    }
+
+    .mail-compose-btn {
+      width: 100%;
+      background: none;
+      border: 1px solid var(--border-bright);
+      color: var(--fg-bright);
+      font-family: var(--font-main);
+      font-size: 13px;
+      padding: 6px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: all 0.1s;
+    }
+
+    .mail-compose-btn:hover {
+      background: var(--fg-dim);
+      color: var(--bg);
+    }
+
+    .mail-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .mail-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .mail-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .mail-item:hover {
+      background: var(--input-bg);
+    }
+
+    .mail-item.unread .mail-item-subject {
+      color: var(--fg-bright);
+      font-weight: bold;
+    }
+
+    .mail-item-subject {
+      color: var(--fg);
+      font-size: 13px;
+    }
+
+    .mail-item-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--fg-dim);
+      margin-top: 2px;
+    }
+
+    .mail-item-preview {
+      font-size: 12px;
+      color: var(--fg-dim);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mail-read-view {
+      height: 100%;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .mail-read-header {
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+    }
+
+    .mail-read-header h2 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      color: var(--fg-bright);
+      margin-bottom: 8px;
+    }
+
+    .mail-read-meta {
+      color: var(--fg-dim);
+      font-size: 12px;
+    }
+
+    .mail-read-body {
+      color: var(--fg);
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    .mail-compose-form {
+      padding: 20px;
+      overflow-y: auto;
+      height: 100%;
+    }
+
+    .mail-compose-form .form-group {
+      margin-bottom: 12px;
+    }
+
+    .mail-compose-form textarea {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      font-family: var(--font-main);
+      font-size: 14px;
+      padding: 8px;
+      resize: vertical;
+      outline: none;
+      min-height: 200px;
+    }
+
+    .mail-compose-form textarea:focus {
+      border-color: var(--fg-bright);
+    }
+
+    .mail-compose-form input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      font-family: var(--font-main);
+      font-size: 14px;
+      padding: 6px 8px;
+      outline: none;
+    }
+
+    .mail-compose-form input:focus {
+      border-color: var(--fg-bright);
+    }
+
+    .mail-compose-form label {
+      display: block;
+      color: var(--fg-dim);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .mail-status {
+      font-size: 11px;
+      padding: 4px 14px;
+      color: var(--fg-dim);
+      border-bottom: 1px solid var(--border);
+      background: var(--input-bg);
+    }
+
+    .mail-status.ok {
+      color: var(--fg-bright);
+    }
+
+    .mail-status.err {
+      color: var(--accent);
+    }
+
+    /* NOTES */
+    #notes-view {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .notes-list {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+    }
+
+    .note-item {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .note-item:hover,
+    .note-item.active {
+      background: var(--input-bg);
+    }
+
+    .note-item-title {
+      color: var(--fg);
+      font-size: 13px;
+    }
+
+    .note-item-preview {
+      color: var(--fg-dim);
+      font-size: 11px;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .note-item-date {
+      color: var(--fg-dim);
+      font-size: 10px;
+      margin-top: 2px;
+    }
+
+    .notes-editor {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .notes-toolbar {
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: var(--input-bg);
+      flex-shrink: 0;
+    }
+
+    .notes-title-input {
+      flex: 1;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--fg-bright);
+      font-family: var(--font-display);
+      font-size: 22px;
+      outline: none;
+      padding: 2px 4px;
+    }
+
+    .notes-title-input:focus {
+      border-bottom-color: var(--fg-bright);
+    }
+
+    .notes-textarea {
+      flex: 1;
+      background: var(--bg);
+      border: none;
+      color: var(--fg);
+      font-family: var(--font-main);
+      font-size: 14px;
+      padding: 16px;
+      resize: none;
+      outline: none;
+      line-height: 1.7;
+    }
+
+    /* PROFILE */
+    .profile-view {
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .profile-header {
+      border: 1px solid var(--border);
+      padding: 20px;
+      margin-bottom: 16px;
+      background: var(--input-bg);
+      position: relative;
+    }
+
+    .profile-avatar {
+      font-family: var(--font-display);
+      font-size: 60px;
+      color: var(--fg-bright);
+      text-shadow: var(--glow-strong);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .profile-username {
+      font-family: var(--font-display);
+      font-size: 28px;
+      color: var(--accent2);
+      text-shadow: var(--glow);
+    }
+
+    .profile-bio {
+      color: var(--fg);
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+
+    .profile-stats {
+      display: flex;
+      gap: 20px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--fg-dim);
+    }
+
+    .profile-actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .profile-joined {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 11px;
+      color: var(--fg-dim);
+    }
+
+    .btn-follow {
+      background: none;
+      border: 1px solid var(--fg-bright);
+      color: var(--fg-bright);
+      font-family: var(--font-main);
+      font-size: 12px;
+      padding: 4px 14px;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .btn-follow:hover {
+      background: var(--fg-bright);
+      color: var(--bg);
+    }
+
+    .btn-follow.following {
+      border-color: var(--fg-dim);
+      color: var(--fg-dim);
+    }
+
+    .btn-poke {
+      background: none;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: var(--font-main);
+      font-size: 12px;
+      padding: 4px 14px;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .btn-poke:hover {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    /* TOPICS */
+    .topics-grid {
+      padding: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .topic-card {
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.1s;
+      min-width: 140px;
+      animation: scanIn 0.2s ease-out;
+    }
+
+    .topic-card:hover {
+      border-color: var(--fg-bright);
+      box-shadow: var(--glow);
+    }
+
+    .topic-card-name {
+      color: var(--fg-bright);
+      font-size: 15px;
+    }
+
+    .topic-card-count {
+      color: var(--fg-dim);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    /* SETTINGS */
+    .settings-view {
+      padding: 20px;
+      max-width: 500px;
+    }
+
+    .settings-section {
+      margin-bottom: 24px;
+    }
+
+    .settings-section h3 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--fg-bright);
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+    }
+
+    .theme-grid {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .theme-card {
+      border: 2px solid transparent;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.1s;
+      font-family: var(--font-main);
+    }
+
+    .theme-card.active {
+      border-color: var(--fg-bright);
+    }
+
+    .theme-card:hover {
+      border-color: var(--fg-dim);
+    }
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    .settings-row label {
+      color: var(--fg);
+    }
+
+    .toggle {
+      appearance: none;
+      width: 40px;
+      height: 18px;
+      border: 1px solid var(--border-bright);
+      background: var(--bg);
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+    }
+
+    .toggle:checked {
+      background: var(--fg-dim);
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      left: 2px;
+      top: 2px;
+      width: 12px;
+      height: 12px;
+      background: var(--fg-bright);
+      transition: transform 0.2s;
+    }
+
+    .toggle:checked::after {
+      transform: translateX(22px);
+    }
+
+    .settings-input {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      font-family: var(--font-main);
+      font-size: 13px;
+      padding: 4px 8px;
+      outline: none;
+      width: 200px;
+    }
+
+    .settings-input:focus {
+      border-color: var(--fg-bright);
+    }
+
+    /* SIDEBAR */
+    .sidebar-section {
+      margin-bottom: 16px;
+    }
+
+    .online-user {
+      font-size: 12px;
+      color: var(--fg-dim);
+      padding: 2px 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .online-user:hover {
+      color: var(--fg-bright);
+    }
+
+    .online-user .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--fg-bright);
+      display: inline-block;
+    }
+
+    .trending-topic {
+      font-size: 12px;
+      color: var(--fg-dim);
+      padding: 3px 4px;
+      cursor: pointer;
+      transition: color 0.1s;
+    }
+
+    .trending-topic:hover {
+      color: var(--fg-bright);
+    }
+
+    .trending-topic .count {
+      float: right;
+      color: var(--fg-dim);
+      font-size: 10px;
+    }
+
+    .notification-item {
+      font-size: 12px;
+      color: var(--fg-dim);
+      padding: 4px 4px;
+      border-bottom: 1px solid var(--border);
+      animation: slideRight 0.2s ease-out;
+    }
+
+    .notification-item .notif-type {
+      color: var(--accent);
+    }
+
+    .notification-item .notif-from {
+      color: var(--accent2);
+      cursor: pointer;
+    }
+
+    /* OVERLAYS */
+    #help-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--overlay);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #help-overlay.show {
+      display: flex;
+    }
+
+    .help-box {
+      border: 1px solid var(--border-bright);
+      padding: 24px 32px;
+      width: 500px;
+      background: var(--bg);
+      box-shadow: var(--glow-strong);
+      animation: fadeIn 0.2s;
+    }
+
+    .help-box h2 {
+      font-family: var(--font-display);
+      font-size: 28px;
+      color: var(--fg-bright);
+      margin-bottom: 16px;
+    }
+
+    .help-shortcuts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 16px;
+    }
+
+    .shortcut-row {
+      display: flex;
+      gap: 8px;
+      font-size: 13px;
+      align-items: center;
+    }
+
+    .shortcut-row kbd {
+      border: 1px solid var(--border-bright);
+      padding: 1px 6px;
+      font-family: var(--font-main);
+      font-size: 11px;
+      color: var(--fg-bright);
+      min-width: 28px;
+      text-align: center;
+    }
+
+    .shortcut-row span {
+      color: var(--fg-dim);
+    }
+
+    .help-close {
+      margin-top: 20px;
+      text-align: right;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--overlay);
+      z-index: 400;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-box {
+      border: 1px solid var(--border-bright);
+      padding: 24px;
+      min-width: 340px;
+      background: var(--bg);
+      box-shadow: var(--glow-strong);
+      animation: fadeIn 0.2s;
+    }
+
+    .modal-box h3 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      color: var(--fg-bright);
+      margin-bottom: 16px;
+    }
+
+    #search-overlay {
+      display: none;
+      position: fixed;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      z-index: 300;
+      background: var(--bg);
+      border: 1px solid var(--border-bright);
+      box-shadow: var(--glow-strong);
+    }
+
+    #search-overlay.show {
+      display: block;
+    }
+
+    #search-input-main {
+      width: 100%;
+      background: var(--input-bg);
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--fg);
+      font-family: var(--font-main);
+      font-size: 16px;
+      padding: 10px 14px;
+      outline: none;
+    }
+
+    .search-results {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .search-result {
+      padding: 8px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+
+    .search-result:hover {
+      background: var(--input-bg);
+    }
+
+    .search-result .result-type {
+      font-size: 10px;
+      color: var(--fg-dim);
+      letter-spacing: 1px;
+    }
+
+    .search-result .result-main {
+      font-size: 13px;
+      color: var(--fg);
+      margin-top: 2px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--fg-dim);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state h3 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      color: var(--fg-dim);
+      margin-bottom: 8px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: var(--fg-dim);
+      font-size: 13px;
+    }
+
+    .loading::after {
+      content: '...';
+      animation: blink 1.5s step-end infinite;
+    }
+
+    .text-accent {
+      color: var(--accent);
+    }
+
+    .text-accent2 {
+      color: var(--accent2);
+    }
+
+    .text-dim {
+      color: var(--fg-dim);
+    }
+
+    .text-bright {
+      color: var(--fg-bright);
+    }
+
+    .glow {
+      text-shadow: var(--glow);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--fg-dim);
+    }
+
+    ::selection {
+      background: var(--fg-dim);
+      color: var(--bg);
+    }
+
+    @media(max-width:768px) {
+      #main {
+        grid-template-columns: 1fr;
+      }
+
+      #sidebar-left,
+      #sidebar-right {
+        display: none;
+      }
+
+      .auth-box {
+        width: 95vw;
+        padding: 20px;
+      }
+
+      #search-overlay {
+        width: 95vw;
+      }
+    }
+  </style>
+</head>
+
+<body data-theme="phosphor">
+
+  <!-- AUTH -->
+  <div id="auth-screen">
+    <div class="auth-logo">GUNSPACE</div>
+    <div class="auth-sub">// decentralized terminal social network //</div>
+    <div class="auth-box">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login')">[ LOGIN ]</button>
+        <button class="auth-tab" onclick="switchAuthTab('register')">[ REGISTER ]</button>
+      </div>
+      <div id="login-form">
+        <div class="form-group"><label>USERNAME</label><input type="text" id="login-user" placeholder="@username"
+            autocomplete="username" /></div>
+        <div class="form-group"><label>PASSPHRASE</label><input type="password" id="login-pass" placeholder="••••••••"
+            autocomplete="current-password" /></div>
+        <button class="btn-primary" onclick="doLogin()">CONNECT TO GUNSPACE</button>
+      </div>
+      <div id="register-form" class="hidden">
+        <div class="form-group"><label>USERNAME (no spaces)</label><input type="text" id="reg-user"
+            placeholder="@coolhacker" autocomplete="username" /></div>
+        <div class="form-group"><label>PASSPHRASE</label><input type="password" id="reg-pass"
+            placeholder="something memorable" autocomplete="new-password" /></div>
+        <div class="form-group"><label>BIO (optional)</label><input type="text" id="reg-bio"
+            placeholder="lurker, builder, dreamer..." /></div>
+        <button class="btn-primary" onclick="doRegister()">CREATE IDENTITY</button>
+      </div>
+      <div class="auth-error" id="auth-error"></div>
+    </div>
+    <div style="font-size:11px;color:var(--fg-dim);text-align:center;">powered by GunDB · decentralized · no servers ·
+      your keys, your data</div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <div id="topbar">
+      <div class="logo">GUN<span>SPACE</span></div>
+      <div id="nav-links">
+        <button class="nav-btn active" onclick="navigate('feed')" id="nav-feed">FEED</button>
+        <button class="nav-btn" onclick="navigate('music')" id="nav-music">♬ MUSIC</button>
+        <button class="nav-btn" onclick="navigate('chat')" id="nav-chat">CHAT</button>
+        <button class="nav-btn" onclick="navigate('mail')" id="nav-mail">GUNMAIL <span class="badge hidden"
+            id="mail-badge">0</span></button>
+        <button class="nav-btn" onclick="navigate('topics')" id="nav-topics">TOPICS</button>
+        <button class="nav-btn" onclick="navigate('notes')" id="nav-notes">NOTES</button>
+        <button class="nav-btn" onclick="navigate('settings')" id="nav-settings">SETTINGS</button>
+      </div>
+      <div id="topbar-right">
+        <span class="username" onclick="navigate('profile',{user:state.me})" id="me-username">@user</span>
+        <button class="btn-sm" onclick="showSearch()">SEARCH</button>
+        <button class="btn-sm" onclick="showHelp()">HELP</button>
+        <button class="btn-sm" onclick="doLogout()">LOGOUT</button>
+        <span id="clock" class="text-dim">--:--</span>
+      </div>
+    </div>
+
+    <div id="main">
+      <div id="sidebar-left">
+        <div class="sidebar-section">
+          <div class="panel-title">ONLINE</div>
+          <div id="online-users-list"></div>
+        </div>
+        <div class="sidebar-section">
+          <div class="panel-title">NOTIFICATIONS</div>
+          <div id="notif-list"></div>
+        </div>
+      </div>
+
+      <div id="content">
+
+        <!-- FEED -->
+        <div id="feed-view" class="view">
+          <div class="feed-controls">
+            <button class="feed-tab active" onclick="switchFeedTab('global')" id="tab-global">GLOBAL</button>
+            <button class="feed-tab" onclick="switchFeedTab('following')" id="tab-following">FOLLOWING</button>
+            <button class="feed-tab" onclick="switchFeedTab('friends')" id="tab-friends">FRIENDS</button>
+            <button class="feed-tab" onclick="switchFeedTab('bookmarks')" id="tab-bookmarks">BOOKMARKS</button>
+          </div>
+          <div class="compose-area">
+            <textarea id="compose-text"
+              placeholder="what's on your mind? paste a YouTube link for the music feed! (press n)"
+              maxlength="500"></textarea>
+            <div class="compose-bottom">
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input class="topics-input" id="compose-topics" placeholder="#topic1 #topic2 #topic3" />
+                <span class="char-count" id="char-count">500</span>
+              </div>
+              <button class="btn-post" onclick="submitPost()">TRANSMIT ▶</button>
+            </div>
+          </div>
+          <div id="feed-posts"></div>
+        </div>
+
+        <!-- MUSIC FEED -->
+        <div id="music-view" class="view hidden">
+          <div
+            style="padding:10px 16px;border-bottom:1px solid var(--border);background:var(--input-bg);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;">
+            <span
+              style="font-family:var(--font-display);font-size:24px;color:var(--fg-bright);text-shadow:var(--glow);">♬
+              MUSIC FEED</span>
+            <div style="display:flex;align-items:flex-end;gap:2px;height:16px;" id="header-eq">
+              <div class="eq-bar" style="height:6px"></div>
+              <div class="eq-bar" style="height:12px"></div>
+              <div class="eq-bar" style="height:4px"></div>
+              <div class="eq-bar" style="height:16px"></div>
+              <div class="eq-bar" style="height:8px"></div>
+            </div>
+            <span style="font-size:10px;color:var(--fg-dim);letter-spacing:2px;">// CLICK A TRACK TO PLAY AUDIO</span>
+          </div>
+          <div class="music-grid" id="music-posts"></div>
+        </div>
+
+        <!-- CHAT -->
+        <div id="chat-view" class="view hidden">
+          <div class="room-list" id="room-list">
+            <div style="padding:8px 12px;border-bottom:1px solid var(--border);">
+              <button class="mail-compose-btn" onclick="promptNewRoom()" style="font-size:12px;">+ NEW ROOM</button>
+            </div>
+          </div>
+          <div class="room-content">
+            <div class="room-header">
+              <span class="room-name" id="room-name">#general</span>
+              <span class="online-count" id="room-online">0 online</span>
+            </div>
+            <div class="messages" id="messages"></div>
+            <div class="chat-input-area">
+              <span class="chat-prompt">&gt;</span>
+              <input class="chat-input" id="chat-input" placeholder="type message and press ENTER..."
+                onkeydown="chatKeydown(event)" />
+            </div>
+          </div>
+        </div>
+
+        <!-- MAIL -->
+        <div id="mail-view" class="view hidden">
+          <div class="mail-sidebar">
+            <div style="padding:0 8px 8px;">
+              <button class="mail-compose-btn" onclick="showComposeMail()">✉ COMPOSE</button>
+            </div>
+            <div class="mail-folder active" onclick="showMailFolder('inbox')" id="folder-inbox">
+              ▶ INBOX <span class="unread-count" id="inbox-count"></span>
+            </div>
+            <div class="mail-folder" onclick="showMailFolder('sent')" id="folder-sent">
+              ▷ SENT
+            </div>
+          </div>
+          <div class="mail-content" id="mail-content">
+            <div class="empty-state">
+              <div class="empty-icon">✉</div>
+              <h3>INBOX EMPTY</h3>
+              <p class="text-dim">no messages yet</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOPICS -->
+        <div id="topics-view" class="view hidden">
+          <div
+            style="padding:12px 16px;border-bottom:1px solid var(--border);font-family:var(--font-display);font-size:22px;color:var(--fg-bright);">
+            # TOPICS</div>
+          <div class="topics-grid" id="topics-grid"></div>
+          <div id="topic-feed" class="hidden">
+            <div
+              style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--input-bg);">
+              <button class="btn-sm" onclick="closeTopic()">← BACK</button>
+              <span id="topic-feed-title"
+                style="font-family:var(--font-display);font-size:22px;color:var(--fg-bright);">#topic</span>
+            </div>
+            <div id="topic-posts"></div>
+          </div>
+        </div>
+
+        <!-- NOTES -->
+        <div id="notes-view" class="view hidden">
+          <div class="notes-list" id="notes-list">
+            <div style="padding:8px;">
+              <button class="mail-compose-btn" onclick="newNote()" style="font-size:12px;">+ NEW NOTE</button>
+            </div>
+          </div>
+          <div class="notes-editor">
+            <div class="notes-toolbar">
+              <input class="notes-title-input" id="note-title" placeholder="Note title..." />
+              <button class="btn-sm" onclick="saveNote()">SAVE</button>
+              <button class="btn-sm text-accent" onclick="deleteNote()">DELETE</button>
+            </div>
+            <textarea class="notes-textarea" id="note-body"
+              placeholder="Start writing... (private, encrypted)"></textarea>
+          </div>
+        </div>
+
+        <!-- PROFILE -->
+        <div id="profile-view" class="view hidden">
+          <div class="profile-view" id="profile-content"></div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div id="settings-view" class="view hidden">
+          <div class="settings-view">
+            <div style="font-family:var(--font-display);font-size:28px;color:var(--fg-bright);margin-bottom:20px;">⚙
+              SETTINGS</div>
+            <div class="settings-section">
+              <h3>PROFILE</h3>
+              <div class="form-group">
+                <label>BIO</label>
+                <input class="settings-input" id="settings-bio" style="width:100%"
+                  placeholder="Tell the network who you are..." />
+              </div>
+              <button class="btn-sm" onclick="saveProfile()" style="margin-top:4px;">SAVE PROFILE</button>
+            </div>
+            <div class="settings-section">
+              <h3>THEME</h3>
+              <div class="theme-grid" id="theme-grid">
+                <div class="theme-card" data-theme="phosphor" onclick="setTheme('phosphor')"
+                  style="background:#0a0a0a;color:#33ff33;border-color:#33ff33">GREEN</div>
+                <div class="theme-card" data-theme="amber" onclick="setTheme('amber')"
+                  style="background:#0d0800;color:#ffb000;border-color:#ffb000">AMBER</div>
+                <div class="theme-card" data-theme="matrix" onclick="setTheme('matrix')"
+                  style="background:#000;color:#00ff41;border-color:#00ff41">MATRIX</div>
+                <div class="theme-card" data-theme="ice" onclick="setTheme('ice')"
+                  style="background:#020812;color:#00cfff;border-color:#00cfff">ICE</div>
+                <div class="theme-card" data-theme="c64" onclick="setTheme('c64')"
+                  style="background:#3a30c0;color:#a090ff;border-color:#a090ff">C64</div>
+                <div class="theme-card" data-theme="paper" onclick="setTheme('paper')"
+                  style="background:#f5f0e8;color:#1a1a0a;border-color:#1a1a0a">PAPER</div>
+              </div>
+            </div>
+            <div class="settings-section">
+              <h3>DISPLAY</h3>
+              <div class="settings-row"><label>SCANLINES</label><input type="checkbox" class="toggle"
+                  id="toggle-scanlines" onchange="toggleScanlines(this.checked)" checked /></div>
+              <div class="settings-row"><label>CRT FLICKER</label><input type="checkbox" class="toggle"
+                  id="toggle-flicker" onchange="toggleFlicker(this.checked)" checked /></div>
+              <div class="settings-row">
+                <label>FONT SIZE</label>
+                <select class="settings-input" style="width:120px" onchange="setFontSize(this.value)">
+                  <option value="12px">SMALL</option>
+                  <option value="14px" selected>MEDIUM</option>
+                  <option value="16px">LARGE</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-section">
+              <h3>ABOUT</h3>
+              <div style="font-size:12px;color:var(--fg-dim);line-height:1.8;">
+                GUNSPACE // decentralized terminal social network<br>
+                powered by GunDB · p2p · no central server<br>
+                your keypair = your identity · encrypted DMs<br>
+                open source · self-hostable · censorship-resistant
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="sidebar-right">
+        <div class="sidebar-section">
+          <div class="panel-title">TRENDING</div>
+          <div id="trending-topics"></div>
+        </div>
+        <div class="sidebar-section">
+          <div class="panel-title">WHO TO FOLLOW</div>
+          <div id="who-to-follow"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="statusbar" style="position:relative;z-index:201;">
+      <div class="status-item">
+        <div class="dot online"></div><span id="status-peers">connecting...</span>
+      </div>
+      <div class="status-item" id="status-view">FEED // GLOBAL</div>
+      <div class="status-item" style="margin-left:auto;"><kbd>?</kbd> help &nbsp;<kbd>/</kbd> search &nbsp;<kbd>n</kbd>
+        new post &nbsp;<kbd>j/k</kbd> navigate</div>
+    </div>
+  </div>
+
+  <!-- HELP -->
+  <div id="help-overlay">
+    <div class="help-box">
+      <h2>// KEYBOARD SHORTCUTS</h2>
+      <div class="help-shortcuts">
+        <div class="shortcut-row"><kbd>j</kbd><span>next post</span></div>
+        <div class="shortcut-row"><kbd>k</kbd><span>prev post</span></div>
+        <div class="shortcut-row"><kbd>n</kbd><span>new post</span></div>
+        <div class="shortcut-row"><kbd>/</kbd><span>search</span></div>
+        <div class="shortcut-row"><kbd>g f</kbd><span>go to feed</span></div>
+        <div class="shortcut-row"><kbd>g c</kbd><span>go to chat</span></div>
+        <div class="shortcut-row"><kbd>g m</kbd><span>go to mail</span></div>
+        <div class="shortcut-row"><kbd>g t</kbd><span>go to topics</span></div>
+        <div class="shortcut-row"><kbd>g n</kbd><span>go to notes</span></div>
+        <div class="shortcut-row"><kbd>g u</kbd><span>go to music</span></div>
+        <div class="shortcut-row"><kbd>b</kbd><span>bookmark post</span></div>
+        <div class="shortcut-row"><kbd>p</kbd><span>open profile</span></div>
+        <div class="shortcut-row"><kbd>Esc</kbd><span>close overlay</span></div>
+        <div class="shortcut-row"><kbd>?</kbd><span>toggle help</span></div>
+      </div>
+      <div class="help-close"><button class="btn-sm" onclick="hideHelp()">[ CLOSE ]</button></div>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div id="search-overlay">
+    <input type="text" id="search-input-main" placeholder="/ search users, posts, topics..."
+      oninput="doSearch(this.value)" />
+    <div class="search-results" id="search-results"></div>
+  </div>
+
+  <!-- HIDDEN YT PLAYER -->
+  <div id="yt-hidden">
+    <div id="yt-player-div"></div>
+  </div>
+
+  <!-- BOTTOM PLAYER BAR -->
+  <div id="bottom-player">
+    <img class="player-thumb" id="player-thumb" src="" alt="" />
+    <div class="player-info">
+      <div class="player-caption" id="player-caption">—</div>
+      <div class="player-author" id="player-author"></div>
+    </div>
+    <div class="player-controls">
+      <button class="player-btn" onclick="playerPrev()" title="Previous">&#9664;&#9664;</button>
+      <button class="player-btn main-play" id="player-play-btn" onclick="playerToggle()">&#9654;</button>
+      <button class="player-btn" onclick="playerNext()" title="Next">&#9654;&#9654;</button>
+      <div class="player-eq" id="player-eq">
+        <div class="eq-bar" style="height:5px"></div>
+        <div class="eq-bar" style="height:10px"></div>
+        <div class="eq-bar" style="height:4px"></div>
+        <div class="eq-bar" style="height:14px"></div>
+        <div class="eq-bar" style="height:7px"></div>
+      </div>
+      <a class="player-btn" id="player-yt-link" href="#" target="_blank" title="Open on YouTube"
+        style="text-decoration:none;font-size:12px;">YT</a>
+    </div>
+    <button class="player-btn player-close" onclick="playerClose()" title="Close">✕</button>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box" id="modal-box"></div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════
+    //  GUN INIT - relay peers aggiornati
+    // ═══════════════════════════════════════════
+    const gun = Gun({
+      peers: [
+        'https://shogun-relay.scobrudot.dev/gun',
+        'https://gun.defucc.me/gun',
+        'https://gun.o8.is/gun',
+        'https://relay.peer.ooo/gun',
+      ],
+      localStorage: false
+    });
+    const SEA = Gun.SEA;
+    const gUser = gun.user();
+
+    // ═══════════════════════════════════════════
+    //  STATE
+    // ═══════════════════════════════════════════
+    const state = {
+      me: null, pair: null,
+      currentView: 'feed', feedTab: 'global',
+      currentRoom: 'general', selectedPost: -1,
+      posts: [], following: new Set(), friends: new Set(),
+      bookmarks: new Set(), notifications: [], mailUnread: 0,
+      gKeyPressed: false, notes: {}, currentNote: null,
+      onlineUsers: {}, trendingTopics: {}, allUsers: {},
+      inboxItems: [], sentItems: [],
+    };
+
+    // ═══════════════════════════════════════════
+    //  YOUTUBE UTILS
+    // ═══════════════════════════════════════════
+    const YT_RE = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?(?:[^&]*&)*v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/g;
+
+    function extractYouTubeIds(text) {
+      const ids = [];
+      let m;
+      YT_RE.lastIndex = 0;
+      while ((m = YT_RE.exec(text)) !== null) ids.push(m[1]);
+      return [...new Set(ids)];
+    }
+
+    function hasYouTube(text) { YT_RE.lastIndex = 0; return YT_RE.test(text); }
+
+    function ytThumbnail(id) { return `https://img.youtube.com/vi/${id}/mqdefault.jpg`; }
+
+    // ═══════════════════════════════════════════
+    //  YOUTUBE IFRAME API + BOTTOM PLAYER
+    // ═══════════════════════════════════════════
+    let ytPlayer = null;
+    let ytReady = false;
+    const player = {
+      queue: [],      // array of {id, caption, author}
+      current: -1,
+      playing: false,
+    };
+
+    // Load YouTube IFrame API once
+    (function loadYTApi() {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+    })();
+
+    // Called by YouTube API when ready
+    window.onYouTubeIframeAPIReady = function () {
+      ytPlayer = new YT.Player('yt-player-div', {
+        height: '1', width: '1',
+        playerVars: { autoplay: 0, controls: 0, rel: 0, fs: 0, modestbranding: 1 },
+        events: {
+          onReady: () => { ytReady = true; },
+          onStateChange: (e) => {
+            if (e.data === YT.PlayerState.ENDED) playerNext();
+            if (e.data === YT.PlayerState.PLAYING) { player.playing = true; updatePlayerUI(); }
+            if (e.data === YT.PlayerState.PAUSED) { player.playing = false; updatePlayerUI(); }
+          }
+        }
+      });
+    };
+
+    function playerPlay(idx) {
+      if (idx < 0 || idx >= player.queue.length) return;
+      player.current = idx;
+      const track = player.queue[idx];
+      if (!ytReady) { setTimeout(() => playerPlay(idx), 300); return; }
+      ytPlayer.loadVideoById(track.id);
+      ytPlayer.playVideo();
+      player.playing = true;
+      showBottomPlayer(track);
+      renderMusicFeed(); // refresh card states
+    }
+
+    function playerToggle() {
+      if (!ytReady || player.current < 0) return;
+      if (player.playing) { ytPlayer.pauseVideo(); }
+      else { ytPlayer.playVideo(); }
+    }
+
+    function playerNext() {
+      const next = player.current + 1;
+      if (next < player.queue.length) playerPlay(next);
+      else { player.playing = false; updatePlayerUI(); }
+    }
+
+    function playerPrev() {
+      const prev = player.current - 1;
+      if (prev >= 0) playerPlay(prev);
+    }
+
+    function playerClose() {
+      if (ytReady) ytPlayer.stopVideo();
+      player.playing = false;
+      player.current = -1;
+      document.getElementById('bottom-player').classList.remove('visible');
+      document.getElementById('app').classList.remove('has-player');
+      renderMusicFeed();
+    }
+
+    function showBottomPlayer(track) {
+      document.getElementById('player-thumb').src = `https://img.youtube.com/vi/${track.id}/mqdefault.jpg`;
+      document.getElementById('player-caption').textContent = track.caption || track.id;
+      document.getElementById('player-author').textContent = '@' + track.author;
+      document.getElementById('player-yt-link').href = `https://youtu.be/${track.id}`;
+      document.getElementById('bottom-player').classList.add('visible');
+      document.getElementById('app').classList.add('has-player');
+      updatePlayerUI();
+    }
+
+    function updatePlayerUI() {
+      const btn = document.getElementById('player-play-btn');
+      const eqBars = document.querySelectorAll('#player-eq .eq-bar');
+      if (player.playing) {
+        btn.innerHTML = '&#9646;&#9646;';
+        eqBars.forEach(b => b.classList.remove('paused'));
+      } else {
+        btn.innerHTML = '&#9654;';
+        eqBars.forEach(b => b.classList.add('paused'));
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    //  AUTH
+    // ═══════════════════════════════════════════
+    function switchAuthTab(tab) {
+      document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+      document.querySelectorAll('.auth-tab').forEach((t, i) => {
+        t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+      });
+      setAuthError('');
+    }
+
+    function setAuthError(msg) { document.getElementById('auth-error').textContent = msg; }
+
+    function doLogin() {
+      const user = document.getElementById('login-user').value.trim().toLowerCase().replace(/^@/, '');
+      const pass = document.getElementById('login-pass').value;
+      if (!user || !pass) { setAuthError('USERNAME AND PASSPHRASE REQUIRED'); return; }
+      setAuthError('CONNECTING...');
+      gUser.auth(user, pass, ack => {
+        if (ack.err) { setAuthError('AUTH FAILED: ' + ack.err); return; }
+        state.me = user; state.pair = gUser._.sea;
+        onLoggedIn();
+      });
+    }
+
+    function doRegister() {
+      const user = document.getElementById('reg-user').value.trim().toLowerCase().replace(/^@/, '');
+      const pass = document.getElementById('reg-pass').value;
+      const bio = document.getElementById('reg-bio').value.trim();
+      if (!user || !pass) { setAuthError('USERNAME AND PASSPHRASE REQUIRED'); return; }
+      if (!/^[a-z0-9_-]+$/.test(user)) { setAuthError('USERNAME: LETTERS, NUMBERS, _ - ONLY'); return; }
+      if (pass.length < 6) { setAuthError('PASSPHRASE TOO SHORT (min 6)'); return; }
+      setAuthError('CREATING IDENTITY...');
+      gUser.create(user, pass, ack => {
+        if (ack.err) { setAuthError('ERROR: ' + ack.err); return; }
+        gUser.auth(user, pass, ack2 => {
+          if (ack2.err) { setAuthError('AUTH FAILED: ' + ack2.err); return; }
+          state.me = user; state.pair = gUser._.sea;
+          // Salva pub E epub — epub è la chiave di cifratura, pub è quella di firma
+          gun.get('users').get(user).put({
+            username: user,
+            bio: bio || '',
+            joined: Date.now(),
+            pub: gUser._.sea.pub,
+            epub: gUser._.sea.epub   // <-- fondamentale per E2E mail
+          });
+          onLoggedIn();
+        });
+      });
+    }
+
+    function doLogout() { gUser.leave(); clearHeartbeat(); location.reload(); }
+
+    function onLoggedIn() {
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      document.getElementById('me-username').textContent = '@' + state.me;
+      loadSettings(); loadFollowing(); loadBookmarks();
+      startHeartbeat(); subscribeNotifications();
+      subscribeMailInbox();
+      loadFeed(); loadRooms(); loadNotes();
+      loadOnlineUsers(); loadTrending(); loadWhoToFollow(); loadSettingsBio();
+      updateClock(); setInterval(updateClock, 1000);
+    }
+
+    // ═══════════════════════════════════════════
+    //  NAVIGATION
+    // ═══════════════════════════════════════════
+    function navigate(view, params = {}) {
+      state.currentView = view;
+      document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      const viewEl = document.getElementById(view + '-view');
+      if (viewEl) viewEl.classList.remove('hidden');
+      const navEl = document.getElementById('nav-' + view);
+      if (navEl) navEl.classList.add('active');
+      document.getElementById('status-view').textContent = view.toUpperCase() + (view === 'feed' ? ' // ' + state.feedTab.toUpperCase() : '');
+      if (view === 'profile') renderProfile(params.user || state.me);
+      if (view === 'topics') renderTopics();
+      if (view === 'music') renderMusicFeed();
+      if (view === 'mail') { showMailFolder('inbox'); }
+    }
+
+    function updateClock() {
+      document.getElementById('clock').textContent = new Date().toTimeString().slice(0, 8);
+    }
+
+    // ═══════════════════════════════════════════
+    //  HEARTBEAT
+    // ═══════════════════════════════════════════
+    let heartbeatInterval;
+    function startHeartbeat() {
+      const beat = () => gun.get('presence').get(state.me).put({ username: state.me, ts: Date.now(), online: true });
+      beat(); heartbeatInterval = setInterval(beat, 15000);
+      window.addEventListener('beforeunload', () => gun.get('presence').get(state.me).put({ username: state.me, ts: Date.now(), online: false }));
+    }
+    function clearHeartbeat() { clearInterval(heartbeatInterval); }
+
+    function loadOnlineUsers() {
+      gun.get('presence').map().on((data, key) => {
+        if (!data) return;
+        // Filtra chiavi non valide (metadati Gun, altre app)
+        if (!isValidUsername(key)) return;
+        const alive = data.online && (Date.now() - data.ts) < 60000;
+        if (alive) state.onlineUsers[key] = data; else delete state.onlineUsers[key];
+        renderOnlineUsers();
+      });
+    }
+
+    function renderOnlineUsers() {
+      const el = document.getElementById('online-users-list');
+      const users = Object.values(state.onlineUsers);
+      if (!users.length) { el.innerHTML = '<div class="text-dim" style="font-size:11px;padding:4px;">no one online</div>'; return; }
+      el.innerHTML = users.map(u => `<div class="online-user" onclick="navigate('profile',{user:'${u.username}'})"><span class="dot"></span> @${u.username}</div>`).join('');
+      document.getElementById('status-peers').textContent = users.length + ' online';
+    }
+
+    // ═══════════════════════════════════════════
+    //  FOLLOWING
+    // ═══════════════════════════════════════════
+    function loadFollowing() {
+      gUser.get('following').map().on((val, key) => {
+        if (val) state.following.add(key); else state.following.delete(key);
+      });
+    }
+
+    function followUser(username) {
+      if (username === state.me) return;
+      const isF = state.following.has(username);
+      gUser.get('following').get(username).put(!isF ? true : null);
+      if (!isF) { pushNotification(username, 'follow', state.me); state.following.add(username); }
+      else state.following.delete(username);
+    }
+
+    function pokeUser(username) {
+      if (username === state.me) return;
+      pushNotification(username, 'poke', state.me);
+      showToast('POKE SENT TO @' + username);
+    }
+
+    // ═══════════════════════════════════════════
+    //  NOTIFICATIONS
+    // ═══════════════════════════════════════════
+    function pushNotification(toUser, type, fromUser) {
+      gun.get('notifications').get(toUser).set({ type, from: fromUser, ts: Date.now(), read: false });
+    }
+
+    function subscribeNotifications() {
+      gun.get('notifications').get(state.me).map().on(data => {
+        if (!data) return;
+        state.notifications.unshift(data);
+        renderNotifications();
+      });
+    }
+
+    function renderNotifications() {
+      const el = document.getElementById('notif-list');
+      const recent = state.notifications.slice(0, 8);
+      if (!recent.length) { el.innerHTML = '<div class="text-dim" style="font-size:11px;padding:4px;">none</div>'; return; }
+      el.innerHTML = recent.map(n => `
+    <div class="notification-item">
+      <span class="notif-type">[${n.type || '?'}]</span>
+      <span class="notif-from" onclick="navigate('profile',{user:'${n.from}'})">@${n.from || '?'}</span>
+      ${n.type === 'poke' ? ' poked you!' : n.type === 'follow' ? ' followed you' : n.type === 'mention' ? ' mentioned you' : ''}
+    </div>`).join('');
+    }
+
+    // ═══════════════════════════════════════════
+    //  BOOKMARKS
+    // ═══════════════════════════════════════════
+    function loadBookmarks() {
+      gUser.get('bookmarks').map().on((val, key) => {
+        if (val) state.bookmarks.add(key); else state.bookmarks.delete(key);
+      });
+    }
+
+    function toggleBookmark(postId) {
+      const has = state.bookmarks.has(postId);
+      gUser.get('bookmarks').get(postId).put(!has ? true : null);
+      if (!has) state.bookmarks.add(postId); else state.bookmarks.delete(postId);
+      renderFeed();
+    }
+
+    // ═══════════════════════════════════════════
+    //  FEED & POSTS
+    // ═══════════════════════════════════════════
+    // Namespace univoco per questa app — evita collisioni con altri progetti
+    // che usano gli stessi relay Gun pubblici
+    const POSTS_NS = 'gunspace_posts_v1';
+
+    // Username valido: solo lettere minuscole, numeri, _ e -
+    // Filtra via chiavi Gun interne, indirizzi eth, pub keys, ecc.
+    function isValidUsername(str) {
+      return typeof str === 'string' && /^[a-z0-9_-]{1,32}$/.test(str);
+    }
+
+    // Debounce per evitare 1K+ DOM updates/second su relay con molti dati
+    let _feedRenderTimer = null;
+    function debouncedRenderFeed() {
+      clearTimeout(_feedRenderTimer);
+      _feedRenderTimer = setTimeout(renderFeed, 80);
+    }
+    let _musicRenderTimer = null;
+    function debouncedRenderMusic() {
+      clearTimeout(_musicRenderTimer);
+      _musicRenderTimer = setTimeout(renderMusicFeed, 150);
+    }
+
+    function loadFeed() {
+      gun.get(POSTS_NS).map().on((data, id) => {
+        if (!data || !data.author) return;
+        // Scarta qualsiasi post con autore non valido (altre app, metadati Gun, ecc.)
+        if (!isValidUsername(data.author)) return;
+        // Scarta se mancano campi essenziali
+        if (!data.body || !data.ts) return;
+
+        const idx = state.posts.findIndex(p => p.id === id);
+        if (idx >= 0) state.posts[idx] = { ...data, id }; else state.posts.push({ ...data, id });
+        state.posts.sort((a, b) => b.ts - a.ts);
+        // Limita a 200 post in memoria per non saturare il DOM
+        if (state.posts.length > 200) state.posts = state.posts.slice(0, 200);
+        debouncedRenderFeed();
+        if (state.currentView === 'music') debouncedRenderMusic();
+        if (data.topics) {
+          data.topics.split(' ').forEach(t => {
+            t = t.trim().replace(/^#/, ''); if (!t) return;
+            state.trendingTopics[t] = (state.trendingTopics[t] || 0) + 1;
+          });
+          renderTrending();
+        }
+        state.allUsers[data.author] = true;
+        renderWhoToFollow();
+      });
+    }
+
+    function switchFeedTab(tab) {
+      state.feedTab = tab;
+      ['global', 'following', 'friends', 'bookmarks'].forEach(t => {
+        document.getElementById('tab-' + t)?.classList.toggle('active', t === tab);
+      });
+      document.getElementById('status-view').textContent = 'FEED // ' + tab.toUpperCase();
+      renderFeed();
+    }
+
+    function renderFeed() {
+      const el = document.getElementById('feed-posts');
+      let posts = [...state.posts];
+      if (state.feedTab === 'following') posts = posts.filter(p => state.following.has(p.author) || p.author === state.me);
+      if (state.feedTab === 'friends') posts = posts.filter(p => state.friends.has(p.author));
+      if (state.feedTab === 'bookmarks') posts = posts.filter(p => state.bookmarks.has(p.id));
+      if (!posts.length) {
+        el.innerHTML = `<div class="empty-state"><div class="empty-icon">◌</div><h3>NO TRANSMISSIONS</h3><p class="text-dim">nothing here yet</p></div>`;
+        return;
+      }
+      el.innerHTML = posts.map((p, i) => {
+        const isBookmarked = state.bookmarks.has(p.id);
+        const isSelected = i === state.selectedPost;
+        const body = formatPostBody(p.body || '');
+        const topics = (p.topics || '').split(' ').filter(t => t.trim()).map(t => `<span class="topic-tag" onclick="openTopic('${t.replace(/^#/, '')}')">${t}</span>`).join('');
+        const ytIds = extractYouTubeIds(p.body || '');
+        const ytHint = ytIds.length ? `<span style="font-size:11px;color:var(--accent2);">♬ music post · <button class="post-action" onclick="event.stopPropagation();navigate('music')">view in music feed</button></span>` : '';
+        return `
+    <div class="post ${isSelected ? 'selected' : ''}" id="post-${i}" onclick="selectPost(${i})">
+      <div class="post-header">
+        <span class="post-author" onclick="event.stopPropagation();navigate('profile',{user:'${p.author}'})">@${p.author}</span>
+        <span class="post-time">${timeAgo(p.ts)}</span>
+      </div>
+      <div class="post-body">${body}</div>
+      ${ytHint}
+      ${topics ? `<div class="post-topics">${topics}</div>` : ''}
+      <div class="post-actions">
+        <button class="post-action ${isBookmarked ? 'bookmarked' : ''}" onclick="event.stopPropagation();toggleBookmark('${p.id}')">${isBookmarked ? '★ SAVED' : '☆ SAVE'}</button>
+        <button class="post-action" onclick="event.stopPropagation();navigate('profile',{user:'${p.author}'})">PROFILE</button>
+        <button class="post-action" onclick="event.stopPropagation();replyTo('${p.author}')">REPLY</button>
+        ${p.author !== state.me ? `<button class="post-action" onclick="event.stopPropagation();followUser('${p.author}')">${state.following.has(p.author) ? 'UNFOLLOW' : 'FOLLOW'}</button>` : ''}
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    // ═══════════════════════════════════════════
+    //  MUSIC FEED
+    // ═══════════════════════════════════════════
+    function renderMusicFeed() {
+      const el = document.getElementById('music-posts');
+      const musicPosts = state.posts.filter(p => hasYouTube(p.body || ''));
+
+      if (!musicPosts.length) {
+        el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">♬</div><h3>NO MUSIC YET</h3><p class="text-dim">share a YouTube link in a post to add music here</p></div>`;
+        return;
+      }
+
+      // Build flat queue of all tracks
+      player.queue = [];
+      musicPosts.forEach(p => {
+        const ids = extractYouTubeIds(p.body || '');
+        const caption = (p.body || '').replace(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?[^\s]*|youtu\.be\/[^\s]*)/g, '').trim();
+        ids.forEach(id => player.queue.push({ id, caption: caption || id, author: p.author, ts: p.ts }));
+      });
+
+      el.innerHTML = player.queue.map((track, qi) => {
+        const isPlaying = (player.current === qi && player.playing);
+        const isCurrent = (player.current === qi);
+        return `
+    <div class="music-card ${isPlaying ? 'playing' : ''}" id="mcard-${qi}" onclick="playerPlay(${qi})">
+      <div class="music-card-thumb">
+        <img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" loading="lazy"
+          onerror="this.src='https://img.youtube.com/vi/${track.id}/default.jpg'"/>
+        <div class="music-card-overlay">
+          <div class="play-btn">${isPlaying ? '&#9646;&#9646;' : '&#9654;'}</div>
+        </div>
+        <div class="now-playing-badge">▶ PLAYING</div>
+        <div class="music-card-eq">
+          <div class="eq-bar ${!isPlaying ? 'paused' : ''}" style="height:5px"></div>
+          <div class="eq-bar ${!isPlaying ? 'paused' : ''}" style="height:10px"></div>
+          <div class="eq-bar ${!isPlaying ? 'paused' : ''}" style="height:4px"></div>
+          <div class="eq-bar ${!isPlaying ? 'paused' : ''}" style="height:14px"></div>
+        </div>
+      </div>
+      <div class="music-card-info">
+        <div class="music-card-caption">${escHtml(track.caption) || track.id}</div>
+        <div class="music-card-author" onclick="event.stopPropagation();navigate('profile',{user:'${track.author}'})">@${track.author} · ${timeAgo(track.ts)}</div>
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    function formatPostBody(text) {
+      return text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/@([a-z0-9_-]+)/gi, '<span class="mention" onclick="navigate(\'profile\',{user:\'$1\'})">@$1</span>')
+        .replace(/#([a-z0-9_-]+)/gi, '<span class="hashtag" onclick="openTopic(\'$1\')">#$1</span>');
+    }
+
+    function selectPost(i) {
+      state.selectedPost = i; renderFeed();
+      document.getElementById('post-' + i)?.scrollIntoView({ block: 'nearest' });
+    }
+
+    function submitPost() {
+      const body = document.getElementById('compose-text').value.trim();
+      const topics = document.getElementById('compose-topics').value.trim();
+      if (!body) return;
+      const post = { author: state.me, body, topics, ts: Date.now(), pub: gUser._.sea ? gUser._.sea.pub : '' };
+      gun.get(POSTS_NS).set(post);
+      gun.get('users').get(state.me).get('posts').set(post);
+      document.getElementById('compose-text').value = '';
+      document.getElementById('compose-topics').value = '';
+      document.getElementById('char-count').textContent = '500';
+      const mentions = (body.match(/@([a-z0-9_-]+)/gi) || []).map(m => m.slice(1));
+      mentions.forEach(u => { if (u !== state.me) pushNotification(u, 'mention', state.me); });
+      if (hasYouTube(body)) showToast('♬ POST ADDED TO MUSIC FEED');
+    }
+
+    function replyTo(username) {
+      const ta = document.getElementById('compose-text');
+      ta.value = '@' + username + ' '; navigate('feed'); ta.focus();
+    }
+
+    // ═══════════════════════════════════════════
+    //  TOPICS
+    // ═══════════════════════════════════════════
+    function renderTopics() {
+      const el = document.getElementById('topics-grid');
+      document.getElementById('topic-feed').classList.add('hidden');
+      el.classList.remove('hidden');
+      const topics = Object.entries(state.trendingTopics).sort((a, b) => b[1] - a[1]);
+      if (!topics.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">#</div><h3>NO TOPICS YET</h3></div>'; return; }
+      el.innerHTML = topics.map(([t, count]) => `
+    <div class="topic-card" onclick="openTopic('${t}')">
+      <div class="topic-card-name">#${t}</div>
+      <div class="topic-card-count">${count} post${count !== 1 ? 's' : ''}</div>
+    </div>`).join('');
+    }
+
+    function openTopic(topic) {
+      navigate('topics');
+      document.getElementById('topics-grid').classList.add('hidden');
+      document.getElementById('topic-feed').classList.remove('hidden');
+      document.getElementById('topic-feed-title').textContent = '#' + topic;
+      const posts = state.posts.filter(p => (p.topics || '').toLowerCase().includes(topic.toLowerCase()) || (p.body || '').toLowerCase().includes('#' + topic.toLowerCase()));
+      const tp = document.getElementById('topic-posts');
+      if (!posts.length) { tp.innerHTML = '<div class="empty-state"><div class="empty-icon">#</div><h3>NO POSTS</h3></div>'; return; }
+      tp.innerHTML = posts.map(p => `
+    <div class="post">
+      <div class="post-header">
+        <span class="post-author" onclick="navigate('profile',{user:'${p.author}'})">@${p.author}</span>
+        <span class="post-time">${timeAgo(p.ts)}</span>
+      </div>
+      <div class="post-body">${formatPostBody(p.body || '')}</div>
+    </div>`).join('');
+    }
+
+    function closeTopic() {
+      document.getElementById('topic-feed').classList.add('hidden');
+      document.getElementById('topics-grid').classList.remove('hidden');
+    }
+
+    function renderTrending() {
+      const el = document.getElementById('trending-topics');
+      const topics = Object.entries(state.trendingTopics).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      el.innerHTML = topics.map(([t, c]) => `<div class="trending-topic" onclick="openTopic('${t}')"><span>#${t}</span><span class="count">${c}</span></div>`).join('') || '<div class="text-dim" style="font-size:11px;padding:4px;">none yet</div>';
+    }
+
+    // ═══════════════════════════════════════════
+    //  CHAT
+    // ═══════════════════════════════════════════
+    const ROOMS = ['general', 'tech', 'gaming', 'offtopic', 'random'];
+    function loadRooms() {
+      const el = document.getElementById('room-list');
+      el.querySelectorAll('.room-item-real').forEach(e => e.remove());
+      ROOMS.forEach(r => addRoomItem(r));
+      joinRoom('general');
+    }
+    function addRoomItem(room) {
+      const el = document.getElementById('room-list');
+      const div = document.createElement('div');
+      div.className = 'room-item room-item-real'; div.id = 'room-' + room;
+      div.innerHTML = `# ${room}`; div.onclick = () => joinRoom(room); el.appendChild(div);
+    }
+    function joinRoom(room) {
+      state.currentRoom = room;
+      document.querySelectorAll('.room-item').forEach(r => r.classList.remove('active'));
+      document.getElementById('room-' + room)?.classList.add('active');
+      document.getElementById('room-name').textContent = '#' + room;
+      const msgs = [];
+      document.getElementById('messages').innerHTML = '';
+      gun.get('chat').get(room).set({ type: 'system', body: state.me + ' joined', ts: Date.now() });
+      gun.get('chat').get(room).map().on((data, id) => {
+        if (!data) return;
+        if (msgs.find(m => m._id === id)) return;
+        msgs.push({ ...data, _id: id }); msgs.sort((a, b) => a.ts - b.ts);
+        renderMessages(msgs.slice(-100));
+      });
+    }
+    function renderMessages(msgs) {
+      const el = document.getElementById('messages');
+      el.innerHTML = msgs.map(m => {
+        if (m.type === 'system') return `<div class="message system">*** ${escHtml(m.body)} ***</div>`;
+        return `<div class="message"><span class="msg-time">[${new Date(m.ts).toTimeString().slice(0, 5)}]</span> <span class="msg-author" onclick="navigate('profile',{user:'${m.author}'})">&lt;${m.author}&gt;</span><span class="msg-body"> ${escHtml(m.body || '')}</span></div>`;
+      }).join('');
+      el.scrollTop = el.scrollHeight;
+    }
+    function chatKeydown(e) {
+      if (e.key !== 'Enter') return;
+      const val = document.getElementById('chat-input').value.trim(); if (!val) return;
+      gun.get('chat').get(state.currentRoom).set({ author: state.me, body: val, ts: Date.now(), type: 'message' });
+      document.getElementById('chat-input').value = '';
+    }
+    function promptNewRoom() {
+      showModal(`<h3>// NEW ROOM</h3>
+    <div class="form-group"><label>ROOM NAME</label><input class="settings-input" id="new-room-name" placeholder="no spaces" style="width:100%"/></div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="btn-sm" onclick="createRoom()">CREATE</button>
+      <button class="btn-sm" onclick="hideModal()">CANCEL</button>
+    </div>`);
+    }
+    function createRoom() {
+      const name = document.getElementById('new-room-name')?.value.trim().toLowerCase().replace(/\s+/g, '-');
+      if (!name) return;
+      if (!ROOMS.includes(name)) { ROOMS.push(name); addRoomItem(name); }
+      hideModal(); navigate('chat'); joinRoom(name);
+    }
+
+    // ═══════════════════════════════════════════
+    //  GUNMAIL — REWRITTEN
+    //  Strategia: gun.get('gunmail_v1').get(username)
+    //  è un nodo pubblico che chiunque può scrivere.
+    //  Il contenuto sensibile è cifrato con la pub key
+    //  del destinatario via SEA. Il mittente salva
+    //  una copia in chiaro nel proprio user space.
+    // ═══════════════════════════════════════════
+    let currentMailFolder = 'inbox';
+
+    function subscribeMailInbox() {
+      // Ascolta il nodo pubblico della propria inbox.
+      // I messaggi cifrati usano SEA.secret(sender_epub, my_pair) come chiave.
+      // Tentiamo di decrittare SOLO se data.enc === true, silenziosamente.
+      gun.get('gunmail_v1').get(state.me).map().on(async (data, id) => {
+        if (!data || !data.ts || !data.from) return;
+
+        let body = data.body || '';
+
+        if (data.enc === true && state.pair) {
+          // Per decrittare: abbiamo bisogno dell'epub del MITTENTE
+          // Usiamo SEA.secret(sender_epub, my_pair)
+          try {
+            const senderProfile = await gun.get('users').get(data.from).then();
+            if (senderProfile && senderProfile.epub) {
+              const secret = await SEA.secret(senderProfile.epub, state.pair);
+              if (secret) {
+                const dec = await SEA.decrypt(body, secret);
+                if (dec !== undefined) body = dec;
+              }
+            }
+          } catch (_) {
+            // decryption failed silently — messaggio rimane cifrato
+          }
+        }
+
+        const mail = { ...data, id, body, folder: 'inbox' };
+        const idx = state.inboxItems.findIndex(m => m.id === id);
+        if (idx >= 0) state.inboxItems[idx] = mail; else state.inboxItems.push(mail);
+        state.inboxItems.sort((a, b) => b.ts - a.ts);
+        updateMailBadge();
+        if (state.currentView === 'mail' && currentMailFolder === 'inbox') renderMailList();
+      });
+
+      // Messaggi inviati — salvati in chiaro nel nostro user space
+      gUser.get('gunmail_sent').map().on((data, id) => {
+        if (!data || !data.ts) return;
+        const mail = { ...data, id, folder: 'sent' };
+        const idx = state.sentItems.findIndex(m => m.id === id);
+        if (idx >= 0) state.sentItems[idx] = mail; else state.sentItems.push(mail);
+        state.sentItems.sort((a, b) => b.ts - a.ts);
+        if (state.currentView === 'mail' && currentMailFolder === 'sent') renderMailList();
+      });
+    }
+
+    function updateMailBadge() {
+      const unread = state.inboxItems.filter(m => !m.read).length;
+      state.mailUnread = unread;
+      const badge = document.getElementById('mail-badge');
+      if (unread > 0) { badge.textContent = unread; badge.classList.remove('hidden'); }
+      else badge.classList.add('hidden');
+      document.getElementById('inbox-count').textContent = unread > 0 ? unread : '';
+    }
+
+    function showMailFolder(folder) {
+      currentMailFolder = folder;
+      document.querySelectorAll('.mail-folder').forEach(f => f.classList.remove('active'));
+      document.getElementById('folder-' + folder)?.classList.add('active');
+      renderMailList();
+    }
+
+    function renderMailList() {
+      const el = document.getElementById('mail-content');
+      const items = currentMailFolder === 'inbox' ? state.inboxItems : state.sentItems;
+      if (!items.length) {
+        el.innerHTML = `<div class="empty-state"><div class="empty-icon">✉</div><h3>${currentMailFolder.toUpperCase()} EMPTY</h3><p class="text-dim">no messages</p></div>`;
+        return;
+      }
+      const listHtml = items.map(m => `
+    <div class="mail-item ${m.read ? '' : 'unread'}" onclick="openMail('${m.id}','${currentMailFolder}')">
+      <div class="mail-item-subject">${escHtml(m.subject || '(no subject)')}</div>
+      <div class="mail-item-meta">
+        <span>${currentMailFolder === 'inbox' ? 'FROM: @' + (m.from || '?') : 'TO: @' + (m.to || '?')}</span>
+        <span>${timeAgo(m.ts)}</span>
+      </div>
+      <div class="mail-item-preview">${escHtml((m.body || '').slice(0, 80))}</div>
+    </div>`).join('');
+      el.innerHTML = `<div class="mail-list">${listHtml}</div>`;
+    }
+
+    function openMail(id, folder) {
+      const list = folder === 'inbox' ? state.inboxItems : state.sentItems;
+      const mail = list.find(m => m.id === id); if (!mail) return;
+      // mark read
+      mail.read = true;
+      if (folder === 'inbox') gun.get('gunmail_v1').get(state.me).get(id).get('read').put(true);
+      updateMailBadge();
+      document.getElementById('mail-content').innerHTML = `
+    <div class="mail-read-view">
+      <div style="margin-bottom:12px;"><button class="btn-sm" onclick="renderMailList()">← BACK</button></div>
+      <div class="mail-read-header">
+        <h2>${escHtml(mail.subject || '(no subject)')}</h2>
+        <div class="mail-read-meta">FROM: @${mail.from || '?'} · TO: @${mail.to || '?'} · ${timeAgo(mail.ts)}</div>
+      </div>
+      <div class="mail-read-body">${escHtml(mail.body || '')}</div>
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        ${folder === 'inbox' ? `<button class="btn-sm" onclick="showComposeMail('${mail.from}','Re: ${escHtml(mail.subject || '')}')">REPLY</button>` : ''}
+      </div>
+    </div>`;
+    }
+
+    function showComposeMail(to = '', subject = '') {
+      navigate('mail');
+      document.getElementById('mail-content').innerHTML = `
+    <div class="mail-compose-form">
+      <div style="font-family:var(--font-display);font-size:22px;color:var(--fg-bright);margin-bottom:16px;">✉ COMPOSE MESSAGE</div>
+      <div id="mail-send-status" class="mail-status hidden"></div>
+      <div class="form-group"><label>TO (@username)</label><input class="settings-input" id="mail-to" value="${to}" style="width:100%" placeholder="username (senza @)"/></div>
+      <div class="form-group"><label>SUBJECT</label><input class="settings-input" id="mail-subject" value="${subject}" style="width:100%"/></div>
+      <div class="form-group"><label>MESSAGE</label>
+        <textarea id="mail-body" placeholder="Il messaggio verrà cifrato se il destinatario ha una chiave pubblica registrata."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-post" onclick="sendMail()">TRANSMIT ▶</button>
+        <button class="btn-sm" onclick="showMailFolder('inbox')">CANCEL</button>
+      </div>
+    </div>`;
+    }
+
+    async function sendMail() {
+      const to = (document.getElementById('mail-to')?.value || '').trim().replace(/^@/, '').toLowerCase();
+      const subject = document.getElementById('mail-subject')?.value || '';
+      const body = document.getElementById('mail-body')?.value || '';
+      const statusEl = document.getElementById('mail-send-status');
+
+      if (!to || !body) { showToast('FILL IN RECIPIENT AND MESSAGE'); return; }
+
+      statusEl.textContent = 'LOOKING UP @' + to + '...';
+      statusEl.className = 'mail-status';
+      statusEl.classList.remove('hidden');
+
+      gun.get('users').get(to).once(async (profile) => {
+        if (!profile) {
+          statusEl.textContent = 'ERROR: USER @' + to + ' NOT FOUND';
+          statusEl.classList.add('err');
+          return;
+        }
+
+        let encBody = body;
+        let encrypted = false;
+
+        // epub è la chiave di cifratura Diffie-Hellman, diversa da pub (firma)
+        // Al momento della registrazione salviamo epub: gUser._.sea.epub nel profilo
+        if (profile.epub) {
+          try {
+            statusEl.textContent = 'ENCRYPTING WITH E2E...';
+            // SEA.secret(destinatario.epub, mittente.pair) → shared secret
+            const secret = await SEA.secret(profile.epub, state.pair);
+            if (secret) {
+              encBody = await SEA.encrypt(body, secret);
+              encrypted = true;
+            }
+          } catch (e) {
+            console.warn('Encryption failed:', e);
+          }
+        }
+
+        const mailId = Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        const mail = {
+          from: state.me,
+          to,
+          subject,
+          body: encBody,
+          enc: encrypted,
+          ts: Date.now(),
+          read: false,
+        };
+
+        statusEl.textContent = 'TRANSMITTING...';
+
+        // Scrivi nella inbox pubblica del destinatario
+        gun.get('gunmail_v1').get(to).get(mailId).put(mail, ack => {
+          if (ack.err) {
+            statusEl.textContent = 'ERROR: ' + ack.err;
+            statusEl.classList.add('err');
+            return;
+          }
+          // Salva copia in chiaro nel nostro sent (body originale, mai cifrato)
+          gUser.get('gunmail_sent').get(mailId).put({ ...mail, body, enc: false });
+
+          statusEl.textContent = encrypted
+            ? '✓ TRANSMITTED (E2E ENCRYPTED) → @' + to
+            : '✓ TRANSMITTED → @' + to + ' (no epub found, plaintext)';
+          statusEl.classList.add('ok');
+          showToast('✉ SENT TO @' + to);
+          setTimeout(() => showMailFolder('sent'), 1800);
+        });
+      });
+    }
+
+    // ═══════════════════════════════════════════
+    //  NOTES
+    // ═══════════════════════════════════════════
+    function loadNotes() {
+      gUser.get('notes').map().on(async (data, id) => {
+        if (!data) return;
+        let title = data.title, body = data.body;
+        if (data.enc && state.pair) {
+          try { title = await SEA.decrypt(data.title, state.pair); } catch (e) { }
+          try { body = await SEA.decrypt(data.body, state.pair); } catch (e) { }
+        }
+        state.notes[id] = { ...data, id, title: title || 'Untitled', body: body || '' };
+        renderNotesList();
+      });
+    }
+
+    function renderNotesList() {
+      const el = document.getElementById('notes-list');
+      const ex = el.querySelector('.notes-items'); if (ex) ex.remove();
+      const div = document.createElement('div'); div.className = 'notes-items';
+      const notes = Object.values(state.notes).sort((a, b) => b.ts - a.ts);
+      div.innerHTML = notes.map(n => `
+    <div class="note-item ${state.currentNote === n.id ? 'active' : ''}" onclick="openNote('${n.id}')">
+      <div class="note-item-title">${escHtml(n.title)}</div>
+      <div class="note-item-preview">${escHtml((n.body || '').slice(0, 60))}</div>
+      <div class="note-item-date">${timeAgo(n.ts)}</div>
+    </div>`).join('');
+      el.appendChild(div);
+    }
+
+    function openNote(id) {
+      state.currentNote = id; const note = state.notes[id]; if (!note) return;
+      document.getElementById('note-title').value = note.title || '';
+      document.getElementById('note-body').value = note.body || '';
+      renderNotesList();
+    }
+
+    function newNote() {
+      state.currentNote = null;
+      document.getElementById('note-title').value = '';
+      document.getElementById('note-body').value = '';
+      document.getElementById('note-title').focus();
+    }
+
+    async function saveNote() {
+      const title = document.getElementById('note-title').value || 'Untitled';
+      const body = document.getElementById('note-body').value;
+      let encTitle = title, encBody = body;
+      if (state.pair) {
+        try { encTitle = await SEA.encrypt(title, state.pair); } catch (e) { }
+        try { encBody = await SEA.encrypt(body, state.pair); } catch (e) { }
+      }
+      const note = { title: encTitle, body: encBody, ts: Date.now(), enc: true };
+      if (state.currentNote) { gUser.get('notes').get(state.currentNote).put(note); }
+      else { const ref = gUser.get('notes').set(note); state.currentNote = ref._.get; }
+      showToast('NOTE SAVED (ENCRYPTED)');
+    }
+
+    function deleteNote() {
+      if (!state.currentNote) return;
+      gUser.get('notes').get(state.currentNote).put(null);
+      delete state.notes[state.currentNote]; state.currentNote = null;
+      newNote(); renderNotesList(); showToast('NOTE DELETED');
+    }
+
+    // ═══════════════════════════════════════════
+    //  PROFILE
+    // ═══════════════════════════════════════════
+    function renderProfile(username) {
+      const el = document.getElementById('profile-content');
+      el.innerHTML = '<div class="loading">loading profile</div>';
+      gun.get('users').get(username).once(profile => {
+        if (!profile) { el.innerHTML = '<div class="empty-state"><h3>USER NOT FOUND</h3></div>'; return; }
+        const isMe = username === state.me;
+        const isFollowing = state.following.has(username);
+        const userPosts = state.posts.filter(p => p.author === username);
+        const musicPosts = userPosts.filter(p => hasYouTube(p.body || ''));
+        el.innerHTML = `
+      <div class="profile-header">
+        <div class="profile-avatar">${username[0].toUpperCase()}</div>
+        <div class="profile-username">@${username}</div>
+        <div class="profile-bio">${escHtml(profile.bio || 'no bio yet')}</div>
+        <div class="profile-stats">
+          <div><span>${userPosts.length}</span> posts</div>
+          <div><span>${musicPosts.length}</span> music</div>
+        </div>
+        <div class="profile-joined">joined ${timeAgo(profile.joined)}</div>
+        ${!isMe ? `<div class="profile-actions">
+          <button class="btn-follow ${isFollowing ? 'following' : ''}" onclick="followUser('${username}');renderProfile('${username}')">
+            ${isFollowing ? '✓ FOLLOWING' : '+ FOLLOW'}
+          </button>
+          <button class="btn-poke" onclick="pokeUser('${username}')">POKE</button>
+          <button class="btn-sm" onclick="showComposeMail('${username}')">GUNMAIL</button>
+        </div>`: '<div class="profile-actions"><button class="btn-sm" onclick="navigate(\'settings\')">EDIT PROFILE</button></div>'}
+      </div>
+      <div class="panel-title">POSTS</div>
+      <div>${userPosts.length ? userPosts.map(p => `
+        <div class="post">
+          <div class="post-header"><span class="post-time">${timeAgo(p.ts)}</span></div>
+          <div class="post-body">${formatPostBody(p.body || '')}</div>
+        </div>`).join('') : '<div class="empty-state"><h3>NO POSTS</h3></div>'}</div>`;
+      });
+    }
+
+    // ═══════════════════════════════════════════
+    //  SETTINGS
+    // ═══════════════════════════════════════════
+    function loadSettings() {
+      const saved = localStorage.getItem('cs_theme') || 'phosphor';
+      setTheme(saved, false);
+    }
+    function setTheme(theme, save = true) {
+      document.body.dataset.theme = theme;
+      document.querySelectorAll('.theme-card').forEach(c => c.classList.toggle('active', c.dataset.theme === theme));
+      if (save) localStorage.setItem('cs_theme', theme);
+    }
+    function toggleScanlines(on) {
+      document.body.style.setProperty('--scanline', on ? 'rgba(0,0,0,0.15)' : 'transparent');
+      localStorage.setItem('cs_scanlines', on);
+    }
+    function toggleFlicker(on) {
+      document.getElementById('app').style.animation = on ? 'flicker 8s infinite' : 'none';
+      localStorage.setItem('cs_flicker', on);
+    }
+    function setFontSize(size) { document.body.style.setProperty('--font-size', size); }
+    function loadSettingsBio() { gun.get('users').get(state.me).once(p => { if (p) document.getElementById('settings-bio').value = p.bio || ''; }); }
+    function saveProfile() { gun.get('users').get(state.me).get('bio').put(document.getElementById('settings-bio').value.trim()); showToast('PROFILE UPDATED'); }
+
+    // ═══════════════════════════════════════════
+    //  WHO TO FOLLOW
+    // ═══════════════════════════════════════════
+    function loadWhoToFollow() {
+      gun.get('users').map().on((data, key) => {
+        if (!data) return;
+        if (!isValidUsername(key)) return; // filtra metadati Gun
+        state.allUsers[key] = data;
+        renderWhoToFollow();
+      });
+    }
+    function renderWhoToFollow() {
+      const el = document.getElementById('who-to-follow');
+      const suggestions = Object.keys(state.allUsers).filter(u => u !== state.me && !state.following.has(u)).slice(0, 5);
+      if (!suggestions.length) { el.innerHTML = '<div class="text-dim" style="font-size:11px;padding:4px;">none</div>'; return; }
+      el.innerHTML = suggestions.map(u => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 4px;font-size:12px;">
+      <span class="online-user" onclick="navigate('profile',{user:'${u}'})">@${u}</span>
+      <button class="btn-sm" style="font-size:10px;padding:1px 6px" onclick="followUser('${u}');renderWhoToFollow()">+</button>
+    </div>`).join('');
+    }
+
+    // ═══════════════════════════════════════════
+    //  SEARCH
+    // ═══════════════════════════════════════════
+    function showSearch() { document.getElementById('search-overlay').classList.add('show'); document.getElementById('search-input-main').value = ''; document.getElementById('search-input-main').focus(); document.getElementById('search-results').innerHTML = ''; }
+    function hideSearch() { document.getElementById('search-overlay').classList.remove('show'); }
+    function doSearch(query) {
+      query = query.trim().toLowerCase();
+      const el = document.getElementById('search-results');
+      if (!query) { el.innerHTML = ''; return; }
+      const results = [];
+      Object.keys(state.allUsers).forEach(u => { if (u.includes(query)) results.push({ type: 'USER', main: '@' + u, action: () => { hideSearch(); navigate('profile', { user: u }); } }); });
+      Object.keys(state.trendingTopics).forEach(t => { if (t.includes(query)) results.push({ type: 'TOPIC', main: '#' + t, action: () => { hideSearch(); openTopic(t); } }); });
+      state.posts.filter(p => (p.body || '').toLowerCase().includes(query)).slice(0, 5).forEach(p => { results.push({ type: 'POST', main: (p.body || '').slice(0, 80), sub: 'by @' + p.author, action: () => { hideSearch(); navigate('feed'); } }); });
+      if (!results.length) { el.innerHTML = '<div class="search-result"><div class="result-type">NO RESULTS</div></div>'; return; }
+      el.innerHTML = results.slice(0, 12).map((r, i) => `
+    <div class="search-result" onclick="searchAction(${i})">
+      <div class="result-type">${r.type}</div>
+      <div class="result-main">${escHtml(r.main)}</div>
+      ${r.sub ? `<div class="result-type">${escHtml(r.sub)}</div>` : ''}
+    </div>`).join('');
+      window._searchActions = results.map(r => r.action);
+    }
+    function searchAction(i) { window._searchActions?.[i]?.(); }
+
+    // ═══════════════════════════════════════════
+    //  HELP / MODAL / TOAST
+    // ═══════════════════════════════════════════
+    function showHelp() { document.getElementById('help-overlay').classList.add('show'); }
+    function hideHelp() { document.getElementById('help-overlay').classList.remove('show'); }
+    function showModal(html) { document.getElementById('modal-box').innerHTML = html; document.getElementById('modal-overlay').classList.add('show'); }
+    function hideModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+    function showToast(msg) {
+      const t = document.createElement('div');
+      t.style.cssText = `position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:var(--fg-dim);color:var(--bg);font-family:var(--font-main);font-size:13px;padding:6px 16px;border:1px solid var(--fg-bright);z-index:9000;animation:fadeIn 0.2s;letter-spacing:1px;`;
+      t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500);
+    }
+
+    // ═══════════════════════════════════════════
+    //  KEYBOARD SHORTCUTS
+    // ═══════════════════════════════════════════
+    document.addEventListener('keydown', e => {
+      const active = document.activeElement;
+      const typing = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+      if (e.key === 'Escape') { hideHelp(); hideSearch(); hideModal(); if (typing) active.blur(); return; }
+      if (e.key === '/' && !typing) { e.preventDefault(); showSearch(); return; }
+      if (e.key === '?' && !typing) { showHelp(); return; }
+      if (typing) return;
+      if (e.key === 'g') { state.gKeyPressed = true; setTimeout(() => state.gKeyPressed = false, 1000); return; }
+      if (state.gKeyPressed) {
+        state.gKeyPressed = false;
+        if (e.key === 'f') { navigate('feed'); return; }
+        if (e.key === 'c') { navigate('chat'); return; }
+        if (e.key === 'm') { navigate('mail'); return; }
+        if (e.key === 't') { navigate('topics'); return; }
+        if (e.key === 'n') { navigate('notes'); return; }
+        if (e.key === 'u') { navigate('music'); return; }
+      }
+      if (e.key === 'n') { navigate('feed'); document.getElementById('compose-text').focus(); return; }
+      if (e.key === 'j' && state.currentView === 'feed') { state.selectedPost = Math.min(state.selectedPost + 1, state.posts.length - 1); renderFeed(); document.getElementById('post-' + state.selectedPost)?.scrollIntoView({ block: 'nearest' }); return; }
+      if (e.key === 'k' && state.currentView === 'feed') { state.selectedPost = Math.max(state.selectedPost - 1, 0); renderFeed(); document.getElementById('post-' + state.selectedPost)?.scrollIntoView({ block: 'nearest' }); return; }
+      if (e.key === 'b' && state.currentView === 'feed' && state.selectedPost >= 0) { const p = state.posts[state.selectedPost]; if (p) toggleBookmark(p.id); return; }
+      if (e.key === 'p' && state.currentView === 'feed' && state.selectedPost >= 0) { const p = state.posts[state.selectedPost]; if (p) navigate('profile', { user: p.author }); return; }
+    });
+
+    document.getElementById('compose-text')?.addEventListener('input', function () {
+      const len = 500 - this.value.length;
+      const el = document.getElementById('char-count');
+      el.textContent = len; el.classList.toggle('warn', len < 50);
+      // Preview se contiene YouTube
+      YT_RE.lastIndex = 0;
+      if (YT_RE.test(this.value)) {
+        el.textContent = len + ' ♬';
+      }
+    });
+
+    document.addEventListener('click', e => {
+      const overlay = document.getElementById('search-overlay');
+      if (overlay.classList.contains('show') && !overlay.contains(e.target)) {
+        const btn = e.target.closest('button');
+        if (!btn || btn.textContent.trim() !== 'SEARCH') hideSearch();
+      }
+    });
+
+    // ═══════════════════════════════════════════
+    //  UTILITIES
+    // ═══════════════════════════════════════════
+    function timeAgo(ts) {
+      if (!ts) return ''; const diff = Date.now() - ts;
+      if (diff < 60000) return 'just now';
+      if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+      if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+      return Math.floor(diff / 86400000) + 'd ago';
+    }
+    function escHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function loadTrending() { }
+  </script>
+</body>
+
+</html>
