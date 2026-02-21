@@ -1,0 +1,23 @@
+{
+  "name": "shogun-space",
+  "version": "1.0.0",
+  "description": "decentralized space",
+  "homepage": "https://github.com/scobru/shogun-space#readme",
+  "bugs": {
+    "url": "https://github.com/scobru/shogun-space/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scobru/shogun-space.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "vercel": "^50.22.1"
+  }
+}
