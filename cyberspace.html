@@ -2734,7 +2734,11 @@
         if (!data.body || !data.ts) return;
 
         const idx = state.posts.findIndex(p => p.id === id);
-        if (idx >= 0) state.posts[idx] = { ...data, id }; else state.posts.push({ ...data, id });
+        const formattedBody = formatPostBody(data.body);
+        const ytIds = extractYouTubeIds(data.body);
+        const topicsHtml = (data.topics || '').split(' ').filter(t => t.trim()).map(t => `<span class="topic-tag" onclick="openTopic('${t.replace(/^#/, '')}')">${t}</span>`).join('');
+        const post = { ...data, id, formattedBody, ytIds, topicsHtml };
+        if (idx >= 0) state.posts[idx] = post; else state.posts.push(post);
         state.posts.sort((a, b) => b.ts - a.ts);
         // Limita a 200 post in memoria per non saturare il DOM
         if (state.posts.length > 200) state.posts = state.posts.slice(0, 200);
@@ -2774,9 +2778,9 @@
       el.innerHTML = posts.map((p, i) => {
         const isBookmarked = state.bookmarks.has(p.id);
         const isSelected = i === state.selectedPost;
-        const body = formatPostBody(p.body || '');
-        const topics = (p.topics || '').split(' ').filter(t => t.trim()).map(t => `<span class="topic-tag" onclick="openTopic('${t.replace(/^#/, '')}')">${t}</span>`).join('');
-        const ytIds = extractYouTubeIds(p.body || '');
+        const body = p.formattedBody || formatPostBody(p.body || '');
+        const topics = p.topicsHtml || '';
+        const ytIds = p.ytIds || [];
         const ytHint = ytIds.length ? `<span style="font-size:11px;color:var(--accent2);">♬ music post · <button class="post-action" onclick="event.stopPropagation();navigate('music')">view in music feed</button></span>` : '';
         return `
     <div class="post ${isSelected ? 'selected' : ''}" id="post-${i}" onclick="selectPost(${i})">
@@ -2802,7 +2806,7 @@
     // ═══════════════════════════════════════════
     function renderMusicFeed() {
       const el = document.getElementById('music-posts');
-      const musicPosts = state.posts.filter(p => hasYouTube(p.body || ''));
+      const musicPosts = state.posts.filter(p => (p.ytIds && p.ytIds.length) || hasYouTube(p.body || ''));
 
       if (!musicPosts.length) {
         el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">♬</div><h3>NO MUSIC YET</h3><p class="text-dim">share a YouTube link in a post to add music here</p></div>`;
@@ -2812,7 +2816,7 @@
       // Build flat queue of all tracks
       player.queue = [];
       musicPosts.forEach(p => {
-        const ids = extractYouTubeIds(p.body || '');
+        const ids = p.ytIds || extractYouTubeIds(p.body || '');
         const caption = (p.body || '').replace(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?[^\s]*|youtu\.be\/[^\s]*)/g, '').trim();
         ids.forEach(id => player.queue.push({ id, caption: caption || id, author: p.author, ts: p.ts }));
       });
@@ -2908,7 +2912,7 @@
         <span class="post-author" onclick="navigate('profile',{user:'${p.author}'})">@${p.author}</span>
         <span class="post-time">${timeAgo(p.ts)}</span>
       </div>
-      <div class="post-body">${formatPostBody(p.body || '')}</div>
+      <div class="post-body">${p.formattedBody || formatPostBody(p.body || '')}</div>
     </div>`).join('');
     }
 
@@ -3282,7 +3286,7 @@
       <div>${userPosts.length ? userPosts.map(p => `
         <div class="post">
           <div class="post-header"><span class="post-time">${timeAgo(p.ts)}</span></div>
-          <div class="post-body">${formatPostBody(p.body || '')}</div>
+          <div class="post-body">${p.formattedBody || formatPostBody(p.body || '')}</div>
         </div>`).join('') : '<div class="empty-state"><h3>NO POSTS</h3></div>'}</div>`;
       });
     }
