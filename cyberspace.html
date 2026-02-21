@@ -2352,9 +2352,9 @@
       <div class="player-author" id="player-author"></div>
     </div>
     <div class="player-controls">
-      <button class="player-btn" onclick="playerPrev()" title="Previous">&#9664;&#9664;</button>
-      <button class="player-btn main-play" id="player-play-btn" onclick="playerToggle()">&#9654;</button>
-      <button class="player-btn" onclick="playerNext()" title="Next">&#9654;&#9654;</button>
+      <button class="player-btn" onclick="playerPrev()" title="Previous" aria-label="Previous Track">&#9664;&#9664;</button>
+      <button class="player-btn main-play" id="player-play-btn" onclick="playerToggle()" title="Play/Pause" aria-label="Play">&#9654;</button>
+      <button class="player-btn" onclick="playerNext()" title="Next" aria-label="Next Track">&#9654;&#9654;</button>
       <div class="player-eq" id="player-eq">
         <div class="eq-bar" style="height:5px"></div>
         <div class="eq-bar" style="height:10px"></div>
@@ -2365,7 +2365,7 @@
       <a class="player-btn" id="player-yt-link" href="#" target="_blank" title="Open on YouTube"
         style="text-decoration:none;font-size:12px;">YT</a>
     </div>
-    <button class="player-btn player-close" onclick="playerClose()" title="Close">✕</button>
+    <button class="player-btn player-close" onclick="playerClose()" title="Close" aria-label="Close Player">✕</button>
   </div>
 
   <!-- MODAL -->
@@ -2507,9 +2507,11 @@
       const eqBars = document.querySelectorAll('#player-eq .eq-bar');
       if (player.playing) {
         btn.innerHTML = '&#9646;&#9646;';
+        btn.setAttribute('aria-label', 'Pause');
         eqBars.forEach(b => b.classList.remove('paused'));
       } else {
         btn.innerHTML = '&#9654;';
+        btn.setAttribute('aria-label', 'Play');
         eqBars.forEach(b => b.classList.add('paused'));
       }
     }
@@ -2819,7 +2821,9 @@
         const isPlaying = (player.current === qi && player.playing);
         const isCurrent = (player.current === qi);
         return `
-    <div class="music-card ${isPlaying ? 'playing' : ''}" id="mcard-${qi}" onclick="playerPlay(${qi})">
+    <div class="music-card ${isPlaying ? 'playing' : ''}" id="mcard-${qi}" onclick="playerPlay(${qi})"
+      role="button" tabindex="0" aria-label="Play ${escHtml(track.caption)}"
+      onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); playerPlay(${qi}); }">
       <div class="music-card-thumb">
         <img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" loading="lazy"
           onerror="this.src='https://img.youtube.com/vi/${track.id}/default.jpg'"/>
