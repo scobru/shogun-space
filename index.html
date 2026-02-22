@@ -392,6 +392,7 @@
     //  YOUTUBE UTILS
     // ═══════════════════════════════════════════
     const YT_RE = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?(?:[^&]*&)*v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/g;
+    const YT_URL_RE = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?[^\s]*|youtu\.be\/[^\s]*)/g;
 
     function extractYouTubeIds(text) {
       const ids = [];
@@ -721,8 +722,9 @@
         const idx = state.posts.findIndex(p => p.id === id);
         const formattedBody = formatPostBody(data.body);
         const ytIds = extractYouTubeIds(data.body);
+        const caption = (data.body || "").replace(YT_URL_RE, "").trim();
         const topicsHtml = (data.topics || '').split(' ').filter(t => t.trim()).map(t => `<span class="topic-tag" onclick="openTopic('${t.replace(/^#/, '')}')">${t}</span>`).join('');
-        const post = { ...data, id, formattedBody, ytIds, topicsHtml };
+        const post = { ...data, id, formattedBody, ytIds, caption, topicsHtml };
         if (idx >= 0) state.posts[idx] = post; else state.posts.push(post);
         state.posts.sort((a, b) => b.ts - a.ts);
         // Limita a 200 post in memoria per non saturare il DOM
@@ -791,7 +793,7 @@
     // ═══════════════════════════════════════════
     function renderMusicFeed() {
       const el = document.getElementById('music-posts');
-      const musicPosts = state.posts.filter(p => (p.ytIds && p.ytIds.length) || hasYouTube(p.body || ''));
+      const musicPosts = state.posts.filter(p => p.ytIds && p.ytIds.length);
 
       if (!musicPosts.length) {
         el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">♬</div><h3>NO MUSIC YET</h3><p class="text-dim">share a YouTube link in a post to add music here</p></div>`;
@@ -801,8 +803,8 @@
       // Build flat queue of all tracks
       player.queue = [];
       musicPosts.forEach(p => {
-        const ids = p.ytIds || extractYouTubeIds(p.body || '');
-        const caption = (p.body || '').replace(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?[^\s]*|youtu\.be\/[^\s]*)/g, '').trim();
+        const ids = p.ytIds;
+        const caption = p.caption;
         ids.forEach(id => player.queue.push({ id, caption: caption || id, author: p.author, ts: p.ts }));
       });
 
