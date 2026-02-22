@@ -29,18 +29,18 @@
         <button class="auth-tab" onclick="switchAuthTab('register')">[ REGISTER ]</button>
       </div>
       <div id="login-form">
-        <div class="form-group"><label>USERNAME</label><input type="text" id="login-user" placeholder="@username"
+        <div class="form-group"><label for="login-user">USERNAME</label><input type="text" id="login-user" placeholder="@username"
             autocomplete="username" /></div>
-        <div class="form-group"><label>PASSPHRASE</label><input type="password" id="login-pass" placeholder="••••••••"
+        <div class="form-group"><label for="login-pass">PASSPHRASE</label><input type="password" id="login-pass" placeholder="••••••••"
             autocomplete="current-password" /></div>
         <button class="btn-primary" onclick="doLogin()">CONNECT TO GUNSPACE</button>
       </div>
       <div id="register-form" class="hidden">
-        <div class="form-group"><label>USERNAME (no spaces)</label><input type="text" id="reg-user"
+        <div class="form-group"><label for="reg-user">USERNAME (no spaces)</label><input type="text" id="reg-user"
             placeholder="@coolhacker" autocomplete="username" /></div>
-        <div class="form-group"><label>PASSPHRASE</label><input type="password" id="reg-pass"
+        <div class="form-group"><label for="reg-pass">PASSPHRASE</label><input type="password" id="reg-pass"
             placeholder="something memorable" autocomplete="new-password" /></div>
-        <div class="form-group"><label>BIO (optional)</label><input type="text" id="reg-bio"
+        <div class="form-group"><label for="reg-bio">BIO (optional)</label><input type="text" id="reg-bio"
             placeholder="lurker, builder, dreamer..." /></div>
         <button class="btn-primary" onclick="doRegister()">CREATE IDENTITY</button>
       </div>
@@ -96,12 +96,12 @@
             <button class="feed-tab" onclick="switchFeedTab('bookmarks')" id="tab-bookmarks">BOOKMARKS</button>
           </div>
           <div class="compose-area">
-            <textarea id="compose-text"
+            <label for="compose-text" class="sr-only">Compose new post</label><textarea id="compose-text"
               placeholder="what's on your mind? paste a YouTube link for the music feed! (press n)"
               maxlength="500"></textarea>
             <div class="compose-bottom">
               <div style="display:flex;gap:8px;align-items:center;">
-                <input class="topics-input" id="compose-topics" placeholder="#topic1 #topic2 #topic3" />
+                <label for="compose-topics" class="sr-only">Topics</label><input class="topics-input" id="compose-topics" placeholder="#topic1 #topic2 #topic3" />
                 <span class="char-count" id="char-count">500</span>
               </div>
               <button class="btn-post" onclick="submitPost()">TRANSMIT ▶</button>
@@ -144,7 +144,7 @@
             <div class="messages" id="messages"></div>
             <div class="chat-input-area">
               <span class="chat-prompt">&gt;</span>
-              <input class="chat-input" id="chat-input" placeholder="type message and press ENTER..."
+              <label for="chat-input" class="sr-only">Message</label><input class="chat-input" id="chat-input" placeholder="type message and press ENTER..."
                 onkeydown="chatKeydown(event)" />
             </div>
           </div>
@@ -220,7 +220,7 @@
             <div class="settings-section">
               <h3>PROFILE</h3>
               <div class="form-group">
-                <label>BIO</label>
+                <label for="settings-bio">BIO</label>
                 <input class="settings-input" id="settings-bio" style="width:100%"
                   placeholder="Tell the network who you are..." />
               </div>
@@ -245,13 +245,13 @@
             </div>
             <div class="settings-section">
               <h3>DISPLAY</h3>
-              <div class="settings-row"><label>SCANLINES</label><input type="checkbox" class="toggle"
+              <div class="settings-row"><label for="toggle-scanlines">SCANLINES</label><input type="checkbox" class="toggle"
                   id="toggle-scanlines" onchange="toggleScanlines(this.checked)" checked /></div>
-              <div class="settings-row"><label>CRT FLICKER</label><input type="checkbox" class="toggle"
+              <div class="settings-row"><label for="toggle-flicker">CRT FLICKER</label><input type="checkbox" class="toggle"
                   id="toggle-flicker" onchange="toggleFlicker(this.checked)" checked /></div>
               <div class="settings-row">
-                <label>FONT SIZE</label>
-                <select class="settings-input" style="width:120px" onchange="setFontSize(this.value)">
+                <label for="settings-font-size">FONT SIZE</label>
+                <select class="settings-input" id="settings-font-size" style="width:120px" onchange="setFontSize(this.value)">
                   <option value="12px">SMALL</option>
                   <option value="14px" selected>MEDIUM</option>
                   <option value="16px">LARGE</option>
@@ -319,7 +319,7 @@
 
   <!-- SEARCH -->
   <div id="search-overlay">
-    <input type="text" id="search-input-main" placeholder="/ search users, posts, topics..."
+    <label for="search-input-main" class="sr-only">Search</label><input type="text" id="search-input-main" placeholder="/ search users, posts, topics..."
       oninput="doSearch(this.value)" />
     <div class="search-results" id="search-results"></div>
   </div>
