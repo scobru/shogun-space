@@ -229,18 +229,18 @@
             <div class="settings-section">
               <h3>THEME</h3>
               <div class="theme-grid" id="theme-grid">
-                <div class="theme-card" data-theme="phosphor" onclick="setTheme('phosphor')"
-                  style="background:#0a0a0a;color:#33ff33;border-color:#33ff33">GREEN</div>
-                <div class="theme-card" data-theme="amber" onclick="setTheme('amber')"
-                  style="background:#0d0800;color:#ffb000;border-color:#ffb000">AMBER</div>
-                <div class="theme-card" data-theme="matrix" onclick="setTheme('matrix')"
-                  style="background:#000;color:#00ff41;border-color:#00ff41">MATRIX</div>
-                <div class="theme-card" data-theme="ice" onclick="setTheme('ice')"
-                  style="background:#020812;color:#00cfff;border-color:#00cfff">ICE</div>
-                <div class="theme-card" data-theme="c64" onclick="setTheme('c64')"
-                  style="background:#3a30c0;color:#a090ff;border-color:#a090ff">C64</div>
-                <div class="theme-card" data-theme="paper" onclick="setTheme('paper')"
-                  style="background:#f5f0e8;color:#1a1a0a;border-color:#1a1a0a">PAPER</div>
+                <button class="theme-card" data-theme="phosphor" onclick="setTheme('phosphor')" type="button" aria-label="Select Phosphor Green theme"
+                  style="background:#0a0a0a;color:#33ff33;">GREEN</button>
+                <button class="theme-card" data-theme="amber" onclick="setTheme('amber')" type="button" aria-label="Select Amber theme"
+                  style="background:#0d0800;color:#ffb000;">AMBER</button>
+                <button class="theme-card" data-theme="matrix" onclick="setTheme('matrix')" type="button" aria-label="Select Matrix theme"
+                  style="background:#000;color:#00ff41;">MATRIX</button>
+                <button class="theme-card" data-theme="ice" onclick="setTheme('ice')" type="button" aria-label="Select Ice theme"
+                  style="background:#020812;color:#00cfff;">ICE</button>
+                <button class="theme-card" data-theme="c64" onclick="setTheme('c64')" type="button" aria-label="Select Commodore 64 theme"
+                  style="background:#3a30c0;color:#a090ff;">C64</button>
+                <button class="theme-card" data-theme="paper" onclick="setTheme('paper')" type="button" aria-label="Select Paper theme"
+                  style="background:#f5f0e8;color:#1a1a0a;">PAPER</button>
               </div>
             </div>
             <div class="settings-section">
@@ -1287,7 +1287,11 @@
     }
     function setTheme(theme, save = true) {
       document.body.dataset.theme = theme;
-      document.querySelectorAll('.theme-card').forEach(c => c.classList.toggle('active', c.dataset.theme === theme));
+      document.querySelectorAll('.theme-card').forEach(c => {
+        const isActive = c.dataset.theme === theme;
+        c.classList.toggle('active', isActive);
+        c.setAttribute('aria-pressed', isActive);
+      });
       if (save) localStorage.setItem('cs_theme', theme);
     }
     function toggleScanlines(on) {
