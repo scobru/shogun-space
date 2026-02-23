@@ -347,7 +347,7 @@
         <div class="eq-bar" style="height:14px"></div>
         <div class="eq-bar" style="height:7px"></div>
       </div>
-      <a class="player-btn" id="player-yt-link" href="#" target="_blank" title="Open on YouTube"
+      <a class="player-btn" id="player-yt-link" href="#" target="_blank" rel="noopener noreferrer" title="Open on YouTube"
         style="text-decoration:none;font-size:12px;">YT</a>
     </div>
     <button class="player-btn player-close" onclick="playerClose()" title="Close" aria-label="Close Player">✕</button>
@@ -879,8 +879,8 @@
       const topics = Object.entries(state.trendingTopics).sort((a, b) => b[1] - a[1]);
       if (!topics.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">#</div><h3>NO TOPICS YET</h3></div>'; return; }
       el.innerHTML = topics.map(([t, count]) => `
-    <div class="topic-card" onclick="openTopic('${t}')">
-      <div class="topic-card-name">#${t}</div>
+    <div class="topic-card" onclick="openTopic('${escHtml(escJS(t))}')">
+      <div class="topic-card-name">#${escHtml(t)}</div>
       <div class="topic-card-count">${count} post${count !== 1 ? 's' : ''}</div>
     </div>`).join('');
     }
@@ -911,7 +911,7 @@
     function renderTrending() {
       const el = document.getElementById('trending-topics');
       const topics = Object.entries(state.trendingTopics).sort((a, b) => b[1] - a[1]).slice(0, 10);
-      el.innerHTML = topics.map(([t, c]) => `<div class="trending-topic" onclick="openTopic('${t}')"><span>#${t}</span><span class="count">${c}</span></div>`).join('') || '<div class="text-dim" style="font-size:11px;padding:4px;">none yet</div>';
+      el.innerHTML = topics.map(([t, c]) => `<div class="trending-topic" onclick="openTopic('${escHtml(escJS(t))}')"><span>#${escHtml(t)}</span><span class="count">${c}</span></div>`).join('') || '<div class="text-dim" style="font-size:11px;padding:4px;">none yet</div>';
     }
 
     // ═══════════════════════════════════════════
@@ -1080,7 +1080,7 @@
       </div>
       <div class="mail-read-body">${escHtml(mail.body || '')}</div>
       <div style="margin-top:16px;display:flex;gap:8px;">
-        ${folder === 'inbox' ? `<button class="btn-sm" onclick="showComposeMail('${mail.from}','Re: ${escHtml(mail.subject || '')}')">REPLY</button>` : ''}
+        ${folder === 'inbox' ? `<button class="btn-sm" onclick="showComposeMail('${escHtml(escJS(mail.from))}','Re: ${escHtml(escJS(escHtml(mail.subject || '')))}')">REPLY</button>` : ''}
       </div>
     </div>`;
     }
@@ -1418,6 +1418,7 @@
       return Math.floor(diff / 86400000) + 'd ago';
     }
     function escHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function escJS(str) { return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
     function loadTrending() { }
   </script>
 </body>
