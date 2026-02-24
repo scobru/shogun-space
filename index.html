@@ -608,7 +608,7 @@
         if (!isValidUsername(key)) return;
         const alive = data.online && (Date.now() - data.ts) < 60000;
         if (alive) state.onlineUsers[key] = data; else delete state.onlineUsers[key];
-        renderOnlineUsers();
+        debouncedRenderOnlineUsers();
       });
     }
 
@@ -931,6 +931,7 @@
       div.innerHTML = `# ${room}`; div.onclick = () => joinRoom(room); el.appendChild(div);
     }
     function joinRoom(room) {
+      debouncedRenderMessages.cancel();
       state.currentRoom = room;
       document.querySelectorAll('.room-item').forEach(r => r.classList.remove('active'));
       document.getElementById('room-' + room)?.classList.add('active');
@@ -942,7 +943,7 @@
         if (!data) return;
         if (msgs.find(m => m._id === id)) return;
         msgs.push({ ...data, _id: id }); msgs.sort((a, b) => a.ts - b.ts);
-        renderMessages(msgs.slice(-100));
+        debouncedRenderMessages(msgs.slice(-100));
       });
     }
     function renderMessages(msgs) {
@@ -1015,7 +1016,7 @@
         if (idx >= 0) state.inboxItems[idx] = mail; else state.inboxItems.push(mail);
         state.inboxItems.sort((a, b) => b.ts - a.ts);
         updateMailBadge();
-        if (state.currentView === 'mail' && currentMailFolder === 'inbox') renderMailList();
+        if (state.currentView === 'mail' && currentMailFolder === 'inbox') debouncedRenderMailList();
       });
 
       // Messaggi inviati — salvati in chiaro nel nostro user space
@@ -1025,7 +1026,7 @@
         const idx = state.sentItems.findIndex(m => m.id === id);
         if (idx >= 0) state.sentItems[idx] = mail; else state.sentItems.push(mail);
         state.sentItems.sort((a, b) => b.ts - a.ts);
-        if (state.currentView === 'mail' && currentMailFolder === 'sent') renderMailList();
+        if (state.currentView === 'mail' && currentMailFolder === 'sent') debouncedRenderMailList();
       });
     }
 
@@ -1186,7 +1187,7 @@
           try { body = await SEA.decrypt(data.body, state.pair); } catch (e) { }
         }
         state.notes[id] = { ...data, id, title: title || 'Untitled', body: body || '' };
-        renderNotesList();
+        debouncedRenderNotesList();
       });
     }
 
@@ -1310,7 +1311,7 @@
         if (!data) return;
         if (!isValidUsername(key)) return; // filtra metadati Gun
         state.allUsers[key] = data;
-        renderWhoToFollow();
+        debouncedRenderWhoToFollow();
       });
     }
     function renderWhoToFollow() {
@@ -1410,6 +1411,25 @@
     // ═══════════════════════════════════════════
     //  UTILITIES
     // ═══════════════════════════════════════════
+    function debounce(func, wait) {
+      let timeout;
+      const debounced = function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+      };
+      debounced.cancel = function() {
+        clearTimeout(timeout);
+      };
+      return debounced;
+    }
+
+    const debouncedRenderOnlineUsers = debounce(renderOnlineUsers, 200);
+    const debouncedRenderWhoToFollow = debounce(renderWhoToFollow, 500);
+    const debouncedRenderNotesList = debounce(renderNotesList, 100);
+    const debouncedRenderMailList = debounce(renderMailList, 100);
+    const debouncedRenderMessages = debounce(renderMessages, 50);
+
     function timeAgo(ts) {
       if (!ts) return ''; const diff = Date.now() - ts;
       if (diff < 60000) return 'just now';
