@@ -389,6 +389,22 @@
     };
 
     // ═══════════════════════════════════════════
+    //  UTILS (DEBOUNCE)
+    // ═══════════════════════════════════════════
+    function debounce(func, wait) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    const debouncedRenderOnlineUsers = debounce(renderOnlineUsers, 200);
+    const debouncedRenderTrending = debounce(renderTrending, 500);
+    const debouncedRenderWhoToFollow = debounce(renderWhoToFollow, 500);
+    const debouncedRenderMessages = debounce(renderMessages, 50);
+
+    // ═══════════════════════════════════════════
     //  YOUTUBE UTILS
     // ═══════════════════════════════════════════
     const YT_RE = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?(?:[^&]*&)*v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/g;
@@ -608,7 +624,7 @@
         if (!isValidUsername(key)) return;
         const alive = data.online && (Date.now() - data.ts) < 60000;
         if (alive) state.onlineUsers[key] = data; else delete state.onlineUsers[key];
-        renderOnlineUsers();
+        debouncedRenderOnlineUsers();
       });
     }
 
@@ -700,16 +716,8 @@
     }
 
     // Debounce per evitare 1K+ DOM updates/second su relay con molti dati
-    let _feedRenderTimer = null;
-    function debouncedRenderFeed() {
-      clearTimeout(_feedRenderTimer);
-      _feedRenderTimer = setTimeout(renderFeed, 80);
-    }
-    let _musicRenderTimer = null;
-    function debouncedRenderMusic() {
-      clearTimeout(_musicRenderTimer);
-      _musicRenderTimer = setTimeout(renderMusicFeed, 150);
-    }
+    const debouncedRenderFeed = debounce(renderFeed, 80);
+    const debouncedRenderMusic = debounce(renderMusicFeed, 150);
 
     function loadFeed() {
       gun.get(POSTS_NS).map().on((data, id) => {
@@ -736,10 +744,10 @@
             t = t.trim().replace(/^#/, ''); if (!t) return;
             state.trendingTopics[t] = (state.trendingTopics[t] || 0) + 1;
           });
-          renderTrending();
+          debouncedRenderTrending();
         }
         state.allUsers[data.author] = true;
-        renderWhoToFollow();
+        debouncedRenderWhoToFollow();
       });
     }
 
@@ -1310,7 +1318,7 @@
         if (!data) return;
         if (!isValidUsername(key)) return; // filtra metadati Gun
         state.allUsers[key] = data;
-        renderWhoToFollow();
+        debouncedRenderWhoToFollow();
       });
     }
     function renderWhoToFollow() {
