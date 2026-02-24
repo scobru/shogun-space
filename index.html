@@ -573,6 +573,7 @@
     // ═══════════════════════════════════════════
     function navigate(view, params = {}) {
       state.currentView = view;
+      document.getElementById('content').scrollTop = 0;
       document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       const viewEl = document.getElementById(view + '-view');
@@ -616,7 +617,7 @@
       const el = document.getElementById('online-users-list');
       const users = Object.values(state.onlineUsers);
       if (!users.length) { el.innerHTML = '<div class="text-dim" style="font-size:11px;padding:4px;">no one online</div>'; return; }
-      el.innerHTML = users.map(u => `<div class="online-user" onclick="navigate('profile',{user:'${u.username}'})"><span class="dot"></span> @${u.username}</div>`).join('');
+      el.innerHTML = users.map(u => `<div class="online-user" role="button" tabindex="0" onkeydown="handleListKey(event)" onclick="navigate('profile',{user:'${u.username}'})"><span class="dot"></span> @${u.username}</div>`).join('');
       document.getElementById('status-peers').textContent = users.length + ' online';
     }
 
@@ -928,7 +929,12 @@
       const el = document.getElementById('room-list');
       const div = document.createElement('div');
       div.className = 'room-item room-item-real'; div.id = 'room-' + room;
-      div.innerHTML = `# ${room}`; div.onclick = () => joinRoom(room); el.appendChild(div);
+      div.innerHTML = `# ${room}`;
+      div.setAttribute('role', 'button');
+      div.setAttribute('tabindex', '0');
+      div.onkeydown = handleListKey;
+      div.onclick = () => joinRoom(room);
+      el.appendChild(div);
     }
     function joinRoom(room) {
       state.currentRoom = room;
@@ -1053,7 +1059,7 @@
         return;
       }
       const listHtml = items.map(m => `
-    <div class="mail-item ${m.read ? '' : 'unread'}" onclick="openMail('${m.id}','${currentMailFolder}')">
+    <div class="mail-item ${m.read ? '' : 'unread'}" role="button" tabindex="0" onkeydown="handleListKey(event)" onclick="openMail('${m.id}','${currentMailFolder}')">
       <div class="mail-item-subject">${escHtml(m.subject || '(no subject)')}</div>
       <div class="mail-item-meta">
         <span>${currentMailFolder === 'inbox' ? 'FROM: @' + (m.from || '?') : 'TO: @' + (m.to || '?')}</span>
@@ -1196,7 +1202,7 @@
       const div = document.createElement('div'); div.className = 'notes-items';
       const notes = Object.values(state.notes).sort((a, b) => b.ts - a.ts);
       div.innerHTML = notes.map(n => `
-    <div class="note-item ${state.currentNote === n.id ? 'active' : ''}" onclick="openNote('${n.id}')">
+    <div class="note-item ${state.currentNote === n.id ? 'active' : ''}" role="button" tabindex="0" onkeydown="handleListKey(event)" onclick="openNote('${n.id}')">
       <div class="note-item-title">${escHtml(n.title)}</div>
       <div class="note-item-preview">${escHtml((n.body || '').slice(0, 60))}</div>
       <div class="note-item-date">${timeAgo(n.ts)}</div>
@@ -1418,6 +1424,7 @@
       return Math.floor(diff / 86400000) + 'd ago';
     }
     function escHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function handleListKey(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); } }
     function loadTrending() { }
   </script>
 </body>
