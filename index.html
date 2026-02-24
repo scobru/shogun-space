@@ -662,12 +662,16 @@
       const el = document.getElementById('notif-list');
       const recent = state.notifications.slice(0, 8);
       if (!recent.length) { el.innerHTML = '<div class="text-dim" style="font-size:11px;padding:4px;">none</div>'; return; }
-      el.innerHTML = recent.map(n => `
+      el.innerHTML = recent.map(n => {
+        const type = escHtml(n.type || '?');
+        const from = isValidUsername(n.from) ? n.from : 'unknown';
+        return `
     <div class="notification-item">
-      <span class="notif-type">[${n.type || '?'}]</span>
-      <span class="notif-from" onclick="navigate('profile',{user:'${n.from}'})">@${n.from || '?'}</span>
+      <span class="notif-type">[${type}]</span>
+      <span class="notif-from" onclick="navigate('profile',{user:'${from}'})">@${from}</span>
       ${n.type === 'poke' ? ' poked you!' : n.type === 'follow' ? ' followed you' : n.type === 'mention' ? ' mentioned you' : ''}
-    </div>`).join('');
+    </div>`;
+      }).join('');
     }
 
     // ═══════════════════════════════════════════
@@ -723,7 +727,7 @@
         const formattedBody = formatPostBody(data.body);
         const ytIds = extractYouTubeIds(data.body);
         const caption = (data.body || "").replace(YT_URL_RE, "").trim();
-        const topicsHtml = (data.topics || '').split(' ').filter(t => t.trim()).map(t => `<span class="topic-tag" onclick="openTopic('${t.replace(/^#/, '')}')">${t}</span>`).join('');
+        const topicsHtml = (data.topics || '').split(' ').filter(t => /^[a-z0-9_-]+$/i.test(t.trim())).map(t => `<span class="topic-tag" onclick="openTopic('${t.replace(/^#/, '')}')">${t}</span>`).join('');
         const post = { ...data, id, formattedBody, ytIds, caption, topicsHtml };
         if (idx >= 0) state.posts[idx] = post; else state.posts.push(post);
         state.posts.sort((a, b) => b.ts - a.ts);
@@ -949,7 +953,8 @@
       const el = document.getElementById('messages');
       el.innerHTML = msgs.map(m => {
         if (m.type === 'system') return `<div class="message system">*** ${escHtml(m.body)} ***</div>`;
-        return `<div class="message"><span class="msg-time">[${new Date(m.ts).toTimeString().slice(0, 5)}]</span> <span class="msg-author" onclick="navigate('profile',{user:'${m.author}'})">&lt;${m.author}&gt;</span><span class="msg-body"> ${escHtml(m.body || '')}</span></div>`;
+        const author = isValidUsername(m.author) ? m.author : 'unknown';
+        return `<div class="message"><span class="msg-time">[${new Date(m.ts).toTimeString().slice(0, 5)}]</span> <span class="msg-author" onclick="navigate('profile',{user:'${author}'})">&lt;${author}&gt;</span><span class="msg-body"> ${escHtml(m.body || '')}</span></div>`;
       }).join('');
       el.scrollTop = el.scrollHeight;
     }
@@ -1052,15 +1057,19 @@
         el.innerHTML = `<div class="empty-state"><div class="empty-icon">✉</div><h3>${currentMailFolder.toUpperCase()} EMPTY</h3><p class="text-dim">no messages</p></div>`;
         return;
       }
-      const listHtml = items.map(m => `
+      const listHtml = items.map(m => {
+        const from = isValidUsername(m.from) ? m.from : 'unknown';
+        const to = isValidUsername(m.to) ? m.to : 'unknown';
+        return `
     <div class="mail-item ${m.read ? '' : 'unread'}" onclick="openMail('${m.id}','${currentMailFolder}')">
       <div class="mail-item-subject">${escHtml(m.subject || '(no subject)')}</div>
       <div class="mail-item-meta">
-        <span>${currentMailFolder === 'inbox' ? 'FROM: @' + (m.from || '?') : 'TO: @' + (m.to || '?')}</span>
+        <span>${currentMailFolder === 'inbox' ? 'FROM: @' + from : 'TO: @' + to}</span>
         <span>${timeAgo(m.ts)}</span>
       </div>
       <div class="mail-item-preview">${escHtml((m.body || '').slice(0, 80))}</div>
-    </div>`).join('');
+    </div>`;
+      }).join('');
       el.innerHTML = `<div class="mail-list">${listHtml}</div>`;
     }
 
@@ -1253,8 +1262,8 @@
         const musicPosts = userPosts.filter(p => hasYouTube(p.body || ''));
         el.innerHTML = `
       <div class="profile-header">
-        <div class="profile-avatar">${username[0].toUpperCase()}</div>
-        <div class="profile-username">@${username}</div>
+        <div class="profile-avatar">${escHtml(username)[0].toUpperCase()}</div>
+        <div class="profile-username">@${escHtml(username)}</div>
         <div class="profile-bio">${escHtml(profile.bio || 'no bio yet')}</div>
         <div class="profile-stats">
           <div><span>${userPosts.length}</span> posts</div>
@@ -1417,7 +1426,7 @@
       if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
       return Math.floor(diff / 86400000) + 'd ago';
     }
-    function escHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function escHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
     function loadTrending() { }
   </script>
 </body>
