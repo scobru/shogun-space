@@ -593,11 +593,23 @@
     function navigate(view, params = {}) {
       state.currentView = view;
       document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => {
+        b.classList.remove('active');
+        b.removeAttribute('aria-current');
+      });
       const viewEl = document.getElementById(view + '-view');
-      if (viewEl) viewEl.classList.remove('hidden');
+      if (viewEl) {
+        viewEl.classList.remove('hidden');
+        document.getElementById('content').scrollTop = 0;
+        viewEl.setAttribute('tabindex', '-1');
+        viewEl.focus();
+        viewEl.style.outline = 'none';
+      }
       const navEl = document.getElementById('nav-' + view);
-      if (navEl) navEl.classList.add('active');
+      if (navEl) {
+        navEl.classList.add('active');
+        navEl.setAttribute('aria-current', 'page');
+      }
       document.getElementById('status-view').textContent = view.toUpperCase() + (view === 'feed' ? ' // ' + state.feedTab.toUpperCase() : '');
       if (view === 'profile') renderProfile(params.user || state.me);
       if (view === 'topics') renderTopics();
@@ -1372,6 +1384,8 @@
     function hideModal() { document.getElementById('modal-overlay').classList.remove('show'); }
     function showToast(msg) {
       const t = document.createElement('div');
+      t.setAttribute('role', 'status');
+      t.setAttribute('aria-live', 'polite');
       t.style.cssText = `position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:var(--fg-dim);color:var(--bg);font-family:var(--font-main);font-size:13px;padding:6px 16px;border:1px solid var(--fg-bright);z-index:9000;animation:fadeIn 0.2s;letter-spacing:1px;`;
       t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500);
     }
