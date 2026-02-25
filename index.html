@@ -403,6 +403,9 @@
     const debouncedRenderTrending = debounce(renderTrending, 500);
     const debouncedRenderWhoToFollow = debounce(renderWhoToFollow, 500);
     const debouncedRenderMessages = debounce(renderMessages, 50);
+    const debouncedRenderNotifications = debounce(renderNotifications, 200);
+    const debouncedRenderMailList = debounce(renderMailList, 100);
+    const debouncedRenderNotesList = debounce(renderNotesList, 100);
 
     // ═══════════════════════════════════════════
     //  YOUTUBE UTILS
@@ -670,7 +673,7 @@
       gun.get('notifications').get(state.me).map().on(data => {
         if (!data) return;
         state.notifications.unshift(data);
-        renderNotifications();
+        debouncedRenderNotifications();
       });
     }
 
@@ -950,7 +953,7 @@
         if (!data) return;
         if (msgs.find(m => m._id === id)) return;
         msgs.push({ ...data, _id: id }); msgs.sort((a, b) => a.ts - b.ts);
-        renderMessages(msgs.slice(-100));
+        debouncedRenderMessages(msgs.slice(-100));
       });
     }
     function renderMessages(msgs) {
@@ -1023,7 +1026,7 @@
         if (idx >= 0) state.inboxItems[idx] = mail; else state.inboxItems.push(mail);
         state.inboxItems.sort((a, b) => b.ts - a.ts);
         updateMailBadge();
-        if (state.currentView === 'mail' && currentMailFolder === 'inbox') renderMailList();
+        if (state.currentView === 'mail' && currentMailFolder === 'inbox') debouncedRenderMailList();
       });
 
       // Messaggi inviati — salvati in chiaro nel nostro user space
@@ -1033,7 +1036,7 @@
         const idx = state.sentItems.findIndex(m => m.id === id);
         if (idx >= 0) state.sentItems[idx] = mail; else state.sentItems.push(mail);
         state.sentItems.sort((a, b) => b.ts - a.ts);
-        if (state.currentView === 'mail' && currentMailFolder === 'sent') renderMailList();
+        if (state.currentView === 'mail' && currentMailFolder === 'sent') debouncedRenderMailList();
       });
     }
 
@@ -1194,7 +1197,7 @@
           try { body = await SEA.decrypt(data.body, state.pair); } catch (e) { }
         }
         state.notes[id] = { ...data, id, title: title || 'Untitled', body: body || '' };
-        renderNotesList();
+        debouncedRenderNotesList();
       });
     }
 
