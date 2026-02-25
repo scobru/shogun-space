@@ -391,6 +391,9 @@
     // ═══════════════════════════════════════════
     //  UTILS (DEBOUNCE)
     // ═══════════════════════════════════════════
+    function escHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function escJS(str) { return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+
     function debounce(func, wait) {
       let timeout;
       return function (...args) {
@@ -635,7 +638,7 @@
       const el = document.getElementById('online-users-list');
       const users = Object.values(state.onlineUsers);
       if (!users.length) { el.innerHTML = '<div class="text-dim" style="font-size:11px;padding:4px;">no one online</div>'; return; }
-      el.innerHTML = users.map(u => `<div class="online-user" onclick="navigate('profile',{user:'${u.username}'})"><span class="dot"></span> @${u.username}</div>`).join('');
+      el.innerHTML = users.map(u => `<div class="online-user" onclick="navigate('profile',{user:'${escHtml(escJS(u.username))}'})"><span class="dot"></span> @${escHtml(u.username)}</div>`).join('');
       document.getElementById('status-peers').textContent = users.length + ' online';
     }
 
@@ -684,7 +687,7 @@
       el.innerHTML = recent.map(n => `
     <div class="notification-item">
       <span class="notif-type">[${n.type || '?'}]</span>
-      <span class="notif-from" onclick="navigate('profile',{user:'${n.from}'})">@${n.from || '?'}</span>
+      <span class="notif-from" onclick="navigate('profile',{user:'${escHtml(escJS(n.from))}'})">@${escHtml(n.from) || '?'}</span>
       ${n.type === 'poke' ? ' poked you!' : n.type === 'follow' ? ' followed you' : n.type === 'mention' ? ' mentioned you' : ''}
     </div>`).join('');
     }
@@ -734,7 +737,7 @@
         const formattedBody = formatPostBody(data.body);
         const ytIds = extractYouTubeIds(data.body);
         const caption = (data.body || "").replace(YT_URL_RE, "").trim();
-        const topicsHtml = (data.topics || '').split(' ').filter(t => t.trim()).map(t => `<span class="topic-tag" onclick="openTopic('${t.replace(/^#/, '')}')">${t}</span>`).join('');
+        const topicsHtml = (data.topics || '').split(' ').filter(t => t.trim()).map(t => `<span class="topic-tag" onclick="openTopic('${escHtml(escJS(t.replace(/^#/, '')))}')">${escHtml(t)}</span>`).join('');
         const post = { ...data, id, formattedBody, ytIds, caption, topicsHtml };
         if (idx >= 0) state.posts[idx] = post; else state.posts.push(post);
         state.posts.sort((a, b) => b.ts - a.ts);
@@ -790,10 +793,10 @@
       ${ytHint}
       ${topics ? `<div class="post-topics">${topics}</div>` : ''}
       <div class="post-actions">
-        <button class="post-action ${isBookmarked ? 'bookmarked' : ''}" onclick="event.stopPropagation();toggleBookmark('${p.id}')">${isBookmarked ? '★ SAVED' : '☆ SAVE'}</button>
-        <button class="post-action" onclick="event.stopPropagation();navigate('profile',{user:'${p.author}'})">PROFILE</button>
-        <button class="post-action" onclick="event.stopPropagation();replyTo('${p.author}')">REPLY</button>
-        ${p.author !== state.me ? `<button class="post-action" onclick="event.stopPropagation();followUser('${p.author}')">${state.following.has(p.author) ? 'UNFOLLOW' : 'FOLLOW'}</button>` : ''}
+        <button class="post-action ${isBookmarked ? 'bookmarked' : ''}" onclick="event.stopPropagation();toggleBookmark('${escHtml(escJS(p.id))}')">${isBookmarked ? '★ SAVED' : '☆ SAVE'}</button>
+        <button class="post-action" onclick="event.stopPropagation();navigate('profile',{user:'${escHtml(escJS(p.author))}'})">PROFILE</button>
+        <button class="post-action" onclick="event.stopPropagation();replyTo('${escHtml(escJS(p.author))}')">REPLY</button>
+        ${p.author !== state.me ? `<button class="post-action" onclick="event.stopPropagation();followUser('${escHtml(escJS(p.author))}')">${state.following.has(p.author) ? 'UNFOLLOW' : 'FOLLOW'}</button>` : ''}
       </div>
     </div>`;
       }).join('');
@@ -842,7 +845,7 @@
       </div>
       <div class="music-card-info">
         <div class="music-card-caption">${escHtml(track.caption) || track.id}</div>
-        <div class="music-card-author" onclick="event.stopPropagation();navigate('profile',{user:'${track.author}'})">@${track.author} · ${timeAgo(track.ts)}</div>
+        <div class="music-card-author" onclick="event.stopPropagation();navigate('profile',{user:'${escHtml(escJS(track.author))}'})">@${track.author} · ${timeAgo(track.ts)}</div>
       </div>
     </div>`;
       }).join('');
@@ -960,7 +963,7 @@
       const el = document.getElementById('messages');
       el.innerHTML = msgs.map(m => {
         if (m.type === 'system') return `<div class="message system">*** ${escHtml(m.body)} ***</div>`;
-        return `<div class="message"><span class="msg-time">[${new Date(m.ts).toTimeString().slice(0, 5)}]</span> <span class="msg-author" onclick="navigate('profile',{user:'${m.author}'})">&lt;${m.author}&gt;</span><span class="msg-body"> ${escHtml(m.body || '')}</span></div>`;
+        return `<div class="message"><span class="msg-time">[${new Date(m.ts).toTimeString().slice(0, 5)}]</span> <span class="msg-author" onclick="navigate('profile',{user:'${escHtml(escJS(m.author))}'})">&lt;${m.author}&gt;</span><span class="msg-body"> ${escHtml(m.body || '')}</span></div>`;
       }).join('');
       el.scrollTop = el.scrollHeight;
     }
@@ -1064,10 +1067,10 @@
         return;
       }
       const listHtml = items.map(m => `
-    <div class="mail-item ${m.read ? '' : 'unread'}" onclick="openMail('${m.id}','${currentMailFolder}')">
+    <div class="mail-item ${m.read ? '' : 'unread'}" onclick="openMail('${escHtml(escJS(m.id))}','${escHtml(escJS(currentMailFolder))}')">
       <div class="mail-item-subject">${escHtml(m.subject || '(no subject)')}</div>
       <div class="mail-item-meta">
-        <span>${currentMailFolder === 'inbox' ? 'FROM: @' + (m.from || '?') : 'TO: @' + (m.to || '?')}</span>
+        <span>${currentMailFolder === 'inbox' ? 'FROM: @' + (escHtml(m.from) || '?') : 'TO: @' + (escHtml(m.to) || '?')}</span>
         <span>${timeAgo(m.ts)}</span>
       </div>
       <div class="mail-item-preview">${escHtml((m.body || '').slice(0, 80))}</div>
@@ -1207,7 +1210,7 @@
       const div = document.createElement('div'); div.className = 'notes-items';
       const notes = Object.values(state.notes).sort((a, b) => b.ts - a.ts);
       div.innerHTML = notes.map(n => `
-    <div class="note-item ${state.currentNote === n.id ? 'active' : ''}" onclick="openNote('${n.id}')">
+    <div class="note-item ${state.currentNote === n.id ? 'active' : ''}" onclick="openNote('${escHtml(escJS(n.id))}')">
       <div class="note-item-title">${escHtml(n.title)}</div>
       <div class="note-item-preview">${escHtml((n.body || '').slice(0, 60))}</div>
       <div class="note-item-date">${timeAgo(n.ts)}</div>
@@ -1273,11 +1276,11 @@
         </div>
         <div class="profile-joined">joined ${timeAgo(profile.joined)}</div>
         ${!isMe ? `<div class="profile-actions">
-          <button class="btn-follow ${isFollowing ? 'following' : ''}" onclick="followUser('${username}');renderProfile('${username}')">
+          <button class="btn-follow ${isFollowing ? 'following' : ''}" onclick="followUser('${escHtml(escJS(username))}');renderProfile('${escHtml(escJS(username))}')">
             ${isFollowing ? '✓ FOLLOWING' : '+ FOLLOW'}
           </button>
-          <button class="btn-poke" onclick="pokeUser('${username}')">POKE</button>
-          <button class="btn-sm" onclick="showComposeMail('${username}')">GUNMAIL</button>
+          <button class="btn-poke" onclick="pokeUser('${escHtml(escJS(username))}')">POKE</button>
+          <button class="btn-sm" onclick="showComposeMail('${escHtml(escJS(username))}')">GUNMAIL</button>
         </div>`: '<div class="profile-actions"><button class="btn-sm" onclick="navigate(\'settings\')">EDIT PROFILE</button></div>'}
       </div>
       <div class="panel-title">POSTS</div>
@@ -1334,8 +1337,8 @@
       if (!suggestions.length) { el.innerHTML = '<div class="text-dim" style="font-size:11px;padding:4px;">none</div>'; return; }
       el.innerHTML = suggestions.map(u => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 4px;font-size:12px;">
-      <span class="online-user" onclick="navigate('profile',{user:'${u}'})">@${u}</span>
-      <button class="btn-sm" style="font-size:10px;padding:1px 6px" onclick="followUser('${u}');renderWhoToFollow()">+</button>
+      <span class="online-user" onclick="navigate('profile',{user:'${escHtml(escJS(u))}'})">@${escHtml(u)}</span>
+      <button class="btn-sm" style="font-size:10px;padding:1px 6px" onclick="followUser('${escHtml(escJS(u))}');renderWhoToFollow()">+</button>
     </div>`).join('');
     }
 
@@ -1432,8 +1435,6 @@
       if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
       return Math.floor(diff / 86400000) + 'd ago';
     }
-    function escHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-    function escJS(str) { return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
     function loadTrending() { }
   </script>
 </body>
