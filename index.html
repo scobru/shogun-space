@@ -29,18 +29,18 @@
         <button class="auth-tab" onclick="switchAuthTab('register')">[ REGISTER ]</button>
       </div>
       <div id="login-form">
-        <div class="form-group"><label>USERNAME</label><input type="text" id="login-user" placeholder="@username"
+        <div class="form-group"><label for="login-user">USERNAME</label><input type="text" id="login-user" placeholder="@username"
             autocomplete="username" /></div>
-        <div class="form-group"><label>PASSPHRASE</label><input type="password" id="login-pass" placeholder="••••••••"
+        <div class="form-group"><label for="login-pass">PASSPHRASE</label><input type="password" id="login-pass" placeholder="••••••••"
             autocomplete="current-password" /></div>
         <button class="btn-primary" onclick="doLogin()">CONNECT TO GUNSPACE</button>
       </div>
       <div id="register-form" class="hidden">
-        <div class="form-group"><label>USERNAME (no spaces)</label><input type="text" id="reg-user"
+        <div class="form-group"><label for="reg-user">USERNAME (no spaces)</label><input type="text" id="reg-user"
             placeholder="@coolhacker" autocomplete="username" /></div>
-        <div class="form-group"><label>PASSPHRASE</label><input type="password" id="reg-pass"
+        <div class="form-group"><label for="reg-pass">PASSPHRASE</label><input type="password" id="reg-pass"
             placeholder="something memorable" autocomplete="new-password" /></div>
-        <div class="form-group"><label>BIO (optional)</label><input type="text" id="reg-bio"
+        <div class="form-group"><label for="reg-bio">BIO (optional)</label><input type="text" id="reg-bio"
             placeholder="lurker, builder, dreamer..." /></div>
         <button class="btn-primary" onclick="doRegister()">CREATE IDENTITY</button>
       </div>
@@ -97,12 +97,12 @@
             <button class="feed-tab" onclick="switchFeedTab('bookmarks')" id="tab-bookmarks">BOOKMARKS</button>
           </div>
           <div class="compose-area">
-            <textarea id="compose-text"
+            <label for="compose-text" class="sr-only">Compose new post</label><textarea id="compose-text"
               placeholder="what's on your mind? paste a YouTube link for the music feed! (press n)"
               maxlength="500"></textarea>
             <div class="compose-bottom">
               <div style="display:flex;gap:8px;align-items:center;">
-                <input class="topics-input" id="compose-topics" placeholder="#topic1 #topic2 #topic3" />
+                <label for="compose-topics" class="sr-only">Topics</label><input class="topics-input" id="compose-topics" placeholder="#topic1 #topic2 #topic3" />
                 <span class="char-count" id="char-count">500</span>
               </div>
               <button class="btn-post" onclick="submitPost()">TRANSMIT ▶</button>
@@ -145,7 +145,7 @@
             <div class="messages" id="messages"></div>
             <div class="chat-input-area">
               <span class="chat-prompt">&gt;</span>
-              <input class="chat-input" id="chat-input" placeholder="type message and press ENTER..."
+              <label for="chat-input" class="sr-only">Message</label><input class="chat-input" id="chat-input" placeholder="type message and press ENTER..."
                 onkeydown="chatKeydown(event)" />
             </div>
           </div>
@@ -264,7 +264,7 @@
             <div class="settings-section">
               <h3>PROFILE</h3>
               <div class="form-group">
-                <label>BIO</label>
+                <label for="settings-bio">BIO</label>
                 <input class="settings-input" id="settings-bio" style="width:100%"
                   placeholder="Tell the network who you are..." />
               </div>
@@ -273,29 +273,29 @@
             <div class="settings-section">
               <h3>THEME</h3>
               <div class="theme-grid" id="theme-grid">
-                <div class="theme-card" data-theme="phosphor" onclick="setTheme('phosphor')"
-                  style="background:#0a0a0a;color:#33ff33;border-color:#33ff33">GREEN</div>
-                <div class="theme-card" data-theme="amber" onclick="setTheme('amber')"
-                  style="background:#0d0800;color:#ffb000;border-color:#ffb000">AMBER</div>
-                <div class="theme-card" data-theme="matrix" onclick="setTheme('matrix')"
-                  style="background:#000;color:#00ff41;border-color:#00ff41">MATRIX</div>
-                <div class="theme-card" data-theme="ice" onclick="setTheme('ice')"
-                  style="background:#020812;color:#00cfff;border-color:#00cfff">ICE</div>
-                <div class="theme-card" data-theme="c64" onclick="setTheme('c64')"
-                  style="background:#3a30c0;color:#a090ff;border-color:#a090ff">C64</div>
-                <div class="theme-card" data-theme="paper" onclick="setTheme('paper')"
-                  style="background:#f5f0e8;color:#1a1a0a;border-color:#1a1a0a">PAPER</div>
+                <button class="theme-card" data-theme="phosphor" onclick="setTheme('phosphor')" type="button" aria-label="Select Phosphor Green theme"
+                  style="background:#0a0a0a;color:#33ff33;">GREEN</button>
+                <button class="theme-card" data-theme="amber" onclick="setTheme('amber')" type="button" aria-label="Select Amber theme"
+                  style="background:#0d0800;color:#ffb000;">AMBER</button>
+                <button class="theme-card" data-theme="matrix" onclick="setTheme('matrix')" type="button" aria-label="Select Matrix theme"
+                  style="background:#000;color:#00ff41;">MATRIX</button>
+                <button class="theme-card" data-theme="ice" onclick="setTheme('ice')" type="button" aria-label="Select Ice theme"
+                  style="background:#020812;color:#00cfff;">ICE</button>
+                <button class="theme-card" data-theme="c64" onclick="setTheme('c64')" type="button" aria-label="Select Commodore 64 theme"
+                  style="background:#3a30c0;color:#a090ff;">C64</button>
+                <button class="theme-card" data-theme="paper" onclick="setTheme('paper')" type="button" aria-label="Select Paper theme"
+                  style="background:#f5f0e8;color:#1a1a0a;">PAPER</button>
               </div>
             </div>
             <div class="settings-section">
               <h3>DISPLAY</h3>
-              <div class="settings-row"><label>SCANLINES</label><input type="checkbox" class="toggle"
+              <div class="settings-row"><label for="toggle-scanlines">SCANLINES</label><input type="checkbox" class="toggle"
                   id="toggle-scanlines" onchange="toggleScanlines(this.checked)" checked /></div>
-              <div class="settings-row"><label>CRT FLICKER</label><input type="checkbox" class="toggle"
+              <div class="settings-row"><label for="toggle-flicker">CRT FLICKER</label><input type="checkbox" class="toggle"
                   id="toggle-flicker" onchange="toggleFlicker(this.checked)" checked /></div>
               <div class="settings-row">
-                <label>FONT SIZE</label>
-                <select class="settings-input" style="width:120px" onchange="setFontSize(this.value)">
+                <label for="settings-font-size">FONT SIZE</label>
+                <select class="settings-input" id="settings-font-size" style="width:120px" onchange="setFontSize(this.value)">
                   <option value="12px">SMALL</option>
                   <option value="14px" selected>MEDIUM</option>
                   <option value="16px">LARGE</option>
@@ -364,7 +364,7 @@
 
   <!-- SEARCH -->
   <div id="search-overlay">
-    <input type="text" id="search-input-main" placeholder="/ search users, posts, topics..."
+    <label for="search-input-main" class="sr-only">Search</label><input type="text" id="search-input-main" placeholder="/ search users, posts, topics..."
       oninput="doSearch(this.value)" />
     <div class="search-results" id="search-results"></div>
   </div>
@@ -392,7 +392,7 @@
         <div class="eq-bar" style="height:14px"></div>
         <div class="eq-bar" style="height:7px"></div>
       </div>
-      <a class="player-btn" id="player-yt-link" href="#" target="_blank" title="Open on YouTube"
+      <a class="player-btn" id="player-yt-link" href="#" target="_blank" rel="noopener noreferrer" title="Open on YouTube"
         style="text-decoration:none;font-size:12px;">YT</a>
     </div>
     <button class="player-btn player-close" onclick="playerClose()" title="Close" aria-label="Close Player">✕</button>
@@ -490,9 +490,32 @@
     window.state = state;
 
     // ═══════════════════════════════════════════
+    //  UTILS (DEBOUNCE)
+    // ═══════════════════════════════════════════
+    function escHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function escJS(str) { return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    const debouncedRenderOnlineUsers = debounce(renderOnlineUsers, 200);
+    const debouncedRenderTrending = debounce(renderTrending, 500);
+    const debouncedRenderWhoToFollow = debounce(renderWhoToFollow, 500);
+    const debouncedRenderMessages = debounce(renderMessages, 50);
+    const debouncedRenderNotifications = debounce(renderNotifications, 200);
+    const debouncedRenderMailList = debounce(renderMailList, 100);
+    const debouncedRenderNotesList = debounce(renderNotesList, 100);
+
+    // ═══════════════════════════════════════════
     //  YOUTUBE UTILS
     // ═══════════════════════════════════════════
     const YT_RE = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?(?:[^&]*&)*v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/g;
+    const YT_URL_RE = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?[^\s]*|youtu\.be\/[^\s]*)/g;
 
     function extractYouTubeIds(text) {
       const ids = [];
@@ -709,7 +732,7 @@
         if (!isValidUsername(key)) return;
         const alive = data.online && (Date.now() - data.ts) < 60000;
         if (alive) state.onlineUsers[key] = data; else delete state.onlineUsers[key];
-        renderOnlineUsers();
+        debouncedRenderOnlineUsers();
       });
     }
 
@@ -717,7 +740,7 @@
       const el = document.getElementById('online-users-list');
       const users = Object.values(state.onlineUsers);
       if (!users.length) { el.innerHTML = '<div class="text-dim" style="font-size:11px;padding:4px;">no one online</div>'; return; }
-      el.innerHTML = users.map(u => `<div class="online-user" onclick="navigate('profile',{user:'${u.username}'})"><span class="dot"></span> @${u.username}</div>`).join('');
+      el.innerHTML = users.map(u => `<div class="online-user" onclick="navigate('profile',{user:'${escHtml(escJS(u.username))}'})"><span class="dot"></span> @${escHtml(u.username)}</div>`).join('');
       document.getElementById('status-peers').textContent = users.length + ' online';
     }
 
@@ -755,7 +778,7 @@
       gun.get('notifications').get(state.me).map().on(data => {
         if (!data) return;
         state.notifications.unshift(data);
-        renderNotifications();
+        debouncedRenderNotifications();
       });
     }
 
@@ -766,7 +789,7 @@
       el.innerHTML = recent.map(n => `
     <div class="notification-item">
       <span class="notif-type">[${n.type || '?'}]</span>
-      <span class="notif-from" onclick="navigate('profile',{user:'${n.from}'})">@${n.from || '?'}</span>
+      <span class="notif-from" onclick="navigate('profile',{user:'${escHtml(escJS(n.from))}'})">@${escHtml(n.from) || '?'}</span>
       ${n.type === 'poke' ? ' poked you!' : n.type === 'follow' ? ' followed you' : n.type === 'mention' ? ' mentioned you' : ''}
     </div>`).join('');
     }
@@ -801,16 +824,8 @@
     }
 
     // Debounce per evitare 1K+ DOM updates/second su relay con molti dati
-    let _feedRenderTimer = null;
-    function debouncedRenderFeed() {
-      clearTimeout(_feedRenderTimer);
-      _feedRenderTimer = setTimeout(renderFeed, 80);
-    }
-    let _musicRenderTimer = null;
-    function debouncedRenderMusic() {
-      clearTimeout(_musicRenderTimer);
-      _musicRenderTimer = setTimeout(renderMusicFeed, 150);
-    }
+    const debouncedRenderFeed = debounce(renderFeed, 80);
+    const debouncedRenderMusic = debounce(renderMusicFeed, 150);
 
     function loadFeed() {
       gun.get(POSTS_NS).map().on((data, id) => {
@@ -823,8 +838,9 @@
         const idx = state.posts.findIndex(p => p.id === id);
         const formattedBody = formatPostBody(data.body);
         const ytIds = extractYouTubeIds(data.body);
-        const topicsHtml = (data.topics || '').split(' ').filter(t => t.trim()).map(t => `<span class="topic-tag" onclick="openTopic('${t.replace(/^#/, '')}')">${t}</span>`).join('');
-        const post = { ...data, id, formattedBody, ytIds, topicsHtml };
+        const caption = (data.body || "").replace(YT_URL_RE, "").trim();
+        const topicsHtml = (data.topics || '').split(' ').filter(t => t.trim()).map(t => `<span class="topic-tag" onclick="openTopic('${escHtml(escJS(t.replace(/^#/, '')))}')">${escHtml(t)}</span>`).join('');
+        const post = { ...data, id, formattedBody, ytIds, caption, topicsHtml };
         if (idx >= 0) state.posts[idx] = post; else state.posts.push(post);
         state.posts.sort((a, b) => b.ts - a.ts);
         // Limita a 200 post in memoria per non saturare il DOM
@@ -836,10 +852,10 @@
             t = t.trim().replace(/^#/, ''); if (!t) return;
             state.trendingTopics[t] = (state.trendingTopics[t] || 0) + 1;
           });
-          renderTrending();
+          debouncedRenderTrending();
         }
         state.allUsers[data.author] = true;
-        renderWhoToFollow();
+        debouncedRenderWhoToFollow();
       });
     }
 
@@ -879,10 +895,10 @@
       ${ytHint}
       ${topics ? `<div class="post-topics">${topics}</div>` : ''}
       <div class="post-actions">
-        <button class="post-action ${isBookmarked ? 'bookmarked' : ''}" onclick="event.stopPropagation();toggleBookmark('${p.id}')">${isBookmarked ? '★ SAVED' : '☆ SAVE'}</button>
-        <button class="post-action" onclick="event.stopPropagation();navigate('profile',{user:'${p.author}'})">PROFILE</button>
-        <button class="post-action" onclick="event.stopPropagation();replyTo('${p.author}')">REPLY</button>
-        ${p.author !== state.me ? `<button class="post-action" onclick="event.stopPropagation();followUser('${p.author}')">${state.following.has(p.author) ? 'UNFOLLOW' : 'FOLLOW'}</button>` : ''}
+        <button class="post-action ${isBookmarked ? 'bookmarked' : ''}" onclick="event.stopPropagation();toggleBookmark('${escHtml(escJS(p.id))}')">${isBookmarked ? '★ SAVED' : '☆ SAVE'}</button>
+        <button class="post-action" onclick="event.stopPropagation();navigate('profile',{user:'${escHtml(escJS(p.author))}'})">PROFILE</button>
+        <button class="post-action" onclick="event.stopPropagation();replyTo('${escHtml(escJS(p.author))}')">REPLY</button>
+        ${p.author !== state.me ? `<button class="post-action" onclick="event.stopPropagation();followUser('${escHtml(escJS(p.author))}')">${state.following.has(p.author) ? 'UNFOLLOW' : 'FOLLOW'}</button>` : ''}
       </div>
     </div>`;
       }).join('');
@@ -893,7 +909,7 @@
     // ═══════════════════════════════════════════
     function renderMusicFeed() {
       const el = document.getElementById('music-posts');
-      const musicPosts = state.posts.filter(p => (p.ytIds && p.ytIds.length) || hasYouTube(p.body || ''));
+      const musicPosts = state.posts.filter(p => p.ytIds && p.ytIds.length);
 
       if (!musicPosts.length) {
         el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">♬</div><h3>NO MUSIC YET</h3><p class="text-dim">share a YouTube link in a post to add music here</p></div>`;
@@ -903,8 +919,8 @@
       // Build flat queue of all tracks
       player.queue = [];
       musicPosts.forEach(p => {
-        const ids = p.ytIds || extractYouTubeIds(p.body || '');
-        const caption = (p.body || '').replace(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?[^\s]*|youtu\.be\/[^\s]*)/g, '').trim();
+        const ids = p.ytIds;
+        const caption = p.caption;
         ids.forEach(id => player.queue.push({ id, caption: caption || id, author: p.author, ts: p.ts }));
       });
 
@@ -931,7 +947,7 @@
       </div>
       <div class="music-card-info">
         <div class="music-card-caption">${escHtml(track.caption) || track.id}</div>
-        <div class="music-card-author" onclick="event.stopPropagation();navigate('profile',{user:'${track.author}'})">@${track.author} · ${timeAgo(track.ts)}</div>
+        <div class="music-card-author" onclick="event.stopPropagation();navigate('profile',{user:'${escHtml(escJS(track.author))}'})">@${track.author} · ${timeAgo(track.ts)}</div>
       </div>
     </div>`;
       }).join('');
@@ -979,8 +995,8 @@
       const topics = Object.entries(state.trendingTopics).sort((a, b) => b[1] - a[1]);
       if (!topics.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">#</div><h3>NO TOPICS YET</h3></div>'; return; }
       el.innerHTML = topics.map(([t, count]) => `
-    <div class="topic-card" onclick="openTopic('${t}')">
-      <div class="topic-card-name">#${t}</div>
+    <div class="topic-card" onclick="openTopic('${escHtml(escJS(t))}')">
+      <div class="topic-card-name">#${escHtml(t)}</div>
       <div class="topic-card-count">${count} post${count !== 1 ? 's' : ''}</div>
     </div>`).join('');
     }
@@ -1011,7 +1027,7 @@
     function renderTrending() {
       const el = document.getElementById('trending-topics');
       const topics = Object.entries(state.trendingTopics).sort((a, b) => b[1] - a[1]).slice(0, 10);
-      el.innerHTML = topics.map(([t, c]) => `<div class="trending-topic" onclick="openTopic('${t}')"><span>#${t}</span><span class="count">${c}</span></div>`).join('') || '<div class="text-dim" style="font-size:11px;padding:4px;">none yet</div>';
+      el.innerHTML = topics.map(([t, c]) => `<div class="trending-topic" onclick="openTopic('${escHtml(escJS(t))}')"><span>#${escHtml(t)}</span><span class="count">${c}</span></div>`).join('') || '<div class="text-dim" style="font-size:11px;padding:4px;">none yet</div>';
     }
 
     // ═══════════════════════════════════════════
@@ -1042,14 +1058,14 @@
         if (!data) return;
         if (msgs.find(m => m._id === id)) return;
         msgs.push({ ...data, _id: id }); msgs.sort((a, b) => a.ts - b.ts);
-        renderMessages(msgs.slice(-100));
+        debouncedRenderMessages(msgs.slice(-100));
       });
     }
     function renderMessages(msgs) {
       const el = document.getElementById('messages');
       el.innerHTML = msgs.map(m => {
         if (m.type === 'system') return `<div class="message system">*** ${escHtml(m.body)} ***</div>`;
-        return `<div class="message"><span class="msg-time">[${new Date(m.ts).toTimeString().slice(0, 5)}]</span> <span class="msg-author" onclick="navigate('profile',{user:'${m.author}'})">&lt;${m.author}&gt;</span><span class="msg-body"> ${escHtml(m.body || '')}</span></div>`;
+        return `<div class="message"><span class="msg-time">[${new Date(m.ts).toTimeString().slice(0, 5)}]</span> <span class="msg-author" onclick="navigate('profile',{user:'${escHtml(escJS(m.author))}'})">&lt;${m.author}&gt;</span><span class="msg-body"> ${escHtml(m.body || '')}</span></div>`;
       }).join('');
       el.scrollTop = el.scrollHeight;
     }
@@ -1115,7 +1131,7 @@
         if (idx >= 0) state.inboxItems[idx] = mail; else state.inboxItems.push(mail);
         state.inboxItems.sort((a, b) => b.ts - a.ts);
         updateMailBadge();
-        if (state.currentView === 'mail' && currentMailFolder === 'inbox') renderMailList();
+        if (state.currentView === 'mail' && currentMailFolder === 'inbox') debouncedRenderMailList();
       });
 
       // Messaggi inviati — salvati in chiaro nel nostro user space
@@ -1125,7 +1141,7 @@
         const idx = state.sentItems.findIndex(m => m.id === id);
         if (idx >= 0) state.sentItems[idx] = mail; else state.sentItems.push(mail);
         state.sentItems.sort((a, b) => b.ts - a.ts);
-        if (state.currentView === 'mail' && currentMailFolder === 'sent') renderMailList();
+        if (state.currentView === 'mail' && currentMailFolder === 'sent') debouncedRenderMailList();
       });
     }
 
@@ -1153,10 +1169,10 @@
         return;
       }
       const listHtml = items.map(m => `
-    <div class="mail-item ${m.read ? '' : 'unread'}" onclick="openMail('${m.id}','${currentMailFolder}')">
+    <div class="mail-item ${m.read ? '' : 'unread'}" onclick="openMail('${escHtml(escJS(m.id))}','${escHtml(escJS(currentMailFolder))}')">
       <div class="mail-item-subject">${escHtml(m.subject || '(no subject)')}</div>
       <div class="mail-item-meta">
-        <span>${currentMailFolder === 'inbox' ? 'FROM: @' + (m.from || '?') : 'TO: @' + (m.to || '?')}</span>
+        <span>${currentMailFolder === 'inbox' ? 'FROM: @' + (escHtml(m.from) || '?') : 'TO: @' + (escHtml(m.to) || '?')}</span>
         <span>${timeAgo(m.ts)}</span>
       </div>
       <div class="mail-item-preview">${escHtml((m.body || '').slice(0, 80))}</div>
@@ -1180,7 +1196,7 @@
       </div>
       <div class="mail-read-body">${escHtml(mail.body || '')}</div>
       <div style="margin-top:16px;display:flex;gap:8px;">
-        ${folder === 'inbox' ? `<button class="btn-sm" onclick="showComposeMail('${mail.from}','Re: ${escHtml(mail.subject || '')}')">REPLY</button>` : ''}
+        ${folder === 'inbox' ? `<button class="btn-sm" onclick="showComposeMail('${escHtml(escJS(mail.from))}','Re: ${escHtml(escJS(escHtml(mail.subject || '')))}')">REPLY</button>` : ''}
       </div>
     </div>`;
     }
@@ -1286,7 +1302,7 @@
           try { body = await SEA.decrypt(data.body, state.pair); } catch (e) { }
         }
         state.notes[id] = { ...data, id, title: title || 'Untitled', body: body || '' };
-        renderNotesList();
+        debouncedRenderNotesList();
       });
     }
 
@@ -1296,7 +1312,7 @@
       const div = document.createElement('div'); div.className = 'notes-items';
       const notes = Object.values(state.notes).sort((a, b) => b.ts - a.ts);
       div.innerHTML = notes.map(n => `
-    <div class="note-item ${state.currentNote === n.id ? 'active' : ''}" onclick="openNote('${n.id}')">
+    <div class="note-item ${state.currentNote === n.id ? 'active' : ''}" onclick="openNote('${escHtml(escJS(n.id))}')">
       <div class="note-item-title">${escHtml(n.title)}</div>
       <div class="note-item-preview">${escHtml((n.body || '').slice(0, 60))}</div>
       <div class="note-item-date">${timeAgo(n.ts)}</div>
@@ -1362,11 +1378,11 @@
         </div>
         <div class="profile-joined">joined ${timeAgo(profile.joined)}</div>
         ${!isMe ? `<div class="profile-actions">
-          <button class="btn-follow ${isFollowing ? 'following' : ''}" onclick="followUser('${username}');renderProfile('${username}')">
+          <button class="btn-follow ${isFollowing ? 'following' : ''}" onclick="followUser('${escHtml(escJS(username))}');renderProfile('${escHtml(escJS(username))}')">
             ${isFollowing ? '✓ FOLLOWING' : '+ FOLLOW'}
           </button>
-          <button class="btn-poke" onclick="pokeUser('${username}')">POKE</button>
-          <button class="btn-sm" onclick="showComposeMail('${username}')">GUNMAIL</button>
+          <button class="btn-poke" onclick="pokeUser('${escHtml(escJS(username))}')">POKE</button>
+          <button class="btn-sm" onclick="showComposeMail('${escHtml(escJS(username))}')">GUNMAIL</button>
         </div>`: '<div class="profile-actions"><button class="btn-sm" onclick="navigate(\'settings\')">EDIT PROFILE</button></div>'}
       </div>
       <div class="panel-title">POSTS</div>
@@ -1387,7 +1403,11 @@
     }
     function setTheme(theme, save = true) {
       document.body.dataset.theme = theme;
-      document.querySelectorAll('.theme-card').forEach(c => c.classList.toggle('active', c.dataset.theme === theme));
+      document.querySelectorAll('.theme-card').forEach(c => {
+        const isActive = c.dataset.theme === theme;
+        c.classList.toggle('active', isActive);
+        c.setAttribute('aria-pressed', isActive);
+      });
       if (save) localStorage.setItem('cs_theme', theme);
     }
     function toggleScanlines(on) {
@@ -1410,7 +1430,7 @@
         if (!data) return;
         if (!isValidUsername(key)) return; // filtra metadati Gun
         state.allUsers[key] = data;
-        renderWhoToFollow();
+        debouncedRenderWhoToFollow();
       });
     }
     function renderWhoToFollow() {
@@ -1419,8 +1439,8 @@
       if (!suggestions.length) { el.innerHTML = '<div class="text-dim" style="font-size:11px;padding:4px;">none</div>'; return; }
       el.innerHTML = suggestions.map(u => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 4px;font-size:12px;">
-      <span class="online-user" onclick="navigate('profile',{user:'${u}'})">@${u}</span>
-      <button class="btn-sm" style="font-size:10px;padding:1px 6px" onclick="followUser('${u}');renderWhoToFollow()">+</button>
+      <span class="online-user" onclick="navigate('profile',{user:'${escHtml(escJS(u))}'})">@${escHtml(u)}</span>
+      <button class="btn-sm" style="font-size:10px;padding:1px 6px" onclick="followUser('${escHtml(escJS(u))}');renderWhoToFollow()">+</button>
     </div>`).join('');
     }
 
@@ -1517,7 +1537,6 @@
       if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
       return Math.floor(diff / 86400000) + 'd ago';
     }
-    function escHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
     function loadTrending() { }
   </script>
 </body>
