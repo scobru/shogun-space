@@ -1636,12 +1636,21 @@
     }
 
     .theme-card {
+      appearance: none;
+      background: none;
       border: 2px solid transparent;
+      border-radius: 0;
       padding: 8px 12px;
       cursor: pointer;
       font-size: 12px;
+      text-align: center;
       transition: all 0.1s;
       font-family: var(--font-main);
+    }
+
+    .theme-card:focus-visible {
+      outline: 2px solid var(--fg-bright);
+      outline-offset: 2px;
     }
 
     .theme-card.active {
@@ -2015,3 +2024,16 @@
         width: 95vw;
       }
     }
+
+/* ACCESSIBILITY */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
