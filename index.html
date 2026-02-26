@@ -60,6 +60,7 @@
         <button class="nav-btn" onclick="navigate('chat')" id="nav-chat">CHAT</button>
         <button class="nav-btn" onclick="navigate('mail')" id="nav-mail">GUNMAIL <span class="badge hidden"
             id="mail-badge">0</span></button>
+        <button class="nav-btn" onclick="navigate('bay')" id="nav-bay">🏴‍☠️ THE BAY</button>
         <button class="nav-btn" onclick="navigate('topics')" id="nav-topics">TOPICS</button>
         <button class="nav-btn" onclick="navigate('notes')" id="nav-notes">NOTES</button>
         <button class="nav-btn" onclick="navigate('settings')" id="nav-settings">SETTINGS</button>
@@ -169,6 +170,49 @@
               <h3>INBOX EMPTY</h3>
               <p class="text-dim">no messages yet</p>
             </div>
+          </div>
+        </div>
+
+        <!-- BAY -->
+        <div id="bay-view" class="view hidden">
+          <div style="padding:10px 16px;border-bottom:1px solid var(--border);background:var(--input-bg);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10; justify-content: space-between;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-family:var(--font-display);font-size:24px;color:var(--fg-bright);text-shadow:var(--glow);">🏴‍☠️ THE BAY</span>
+              <span style="font-size:10px;color:var(--fg-dim);letter-spacing:2px;">// DECENTRALIZED TORRENT INDEX</span>
+            </div>
+            <div class="search-box bay-search" style="display:flex;align-items:center;position:relative;">
+              <input type="text" id="searchInput" placeholder="/ search torrents..." autocomplete="off" style="width:250px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);color:var(--fg);font-family:var(--font-mono);font-size:12px;">
+            </div>
+          </div>
+          <div style="padding: 12px 16px; display:flex; gap:8px; border-bottom:1px solid var(--border); background:var(--bg); align-items:center;">
+            <button class="btn-sm cat-btn active" data-cat="all">ALL</button>
+            <button class="btn-sm cat-btn" data-cat="video">🎬 VIDEO</button>
+            <button class="btn-sm cat-btn" data-cat="audio">🎵 AUDIO</button>
+            <button class="btn-sm cat-btn" data-cat="software">💾 SOFTWARE</button>
+            <button class="btn-sm cat-btn" data-cat="games">🎮 GAMES</button>
+            <button class="btn-sm cat-btn" data-cat="other">📦 OTHER</button>
+            <div style="margin-left:auto; display:flex; align-items:center; gap: 12px;">
+                <span style="font-size:12px;color:var(--fg-dim);" id="torrentCount">0 torrents</span>
+                <button class="btn-primary" id="uploadBtn" onclick="openBayUploadModal()">+ UPLOAD</button>
+            </div>
+          </div>
+          
+          <div style="padding: 16px; overflow-x:auto;">
+            <table class="torrent-table" style="width:100%; text-align:left; border-collapse:collapse;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border); color:var(--fg-dim); font-size:12px;">
+                  <th style="padding:8px 4px;">CAT</th>
+                  <th style="padding:8px;">NAME</th>
+                  <th style="padding:8px;">SIZE</th>
+                  <th style="padding:8px;">TRUST</th>
+                  <th style="padding:8px;">DATE</th>
+                  <th style="padding:8px;">MAGNET</th>
+                </tr>
+              </thead>
+              <tbody id="torrentList" style="font-size:13px;">
+                <tr class="empty-row"><td colspan="6" style="text-align:center; padding: 20px; color:var(--fg-dim);">No torrents yet.</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -305,6 +349,7 @@
         <div class="shortcut-row"><kbd>g f</kbd><span>go to feed</span></div>
         <div class="shortcut-row"><kbd>g c</kbd><span>go to chat</span></div>
         <div class="shortcut-row"><kbd>g m</kbd><span>go to mail</span></div>
+        <div class="shortcut-row"><kbd>g b</kbd><span>go to bay</span></div>
         <div class="shortcut-row"><kbd>g t</kbd><span>go to topics</span></div>
         <div class="shortcut-row"><kbd>g n</kbd><span>go to notes</span></div>
         <div class="shortcut-row"><kbd>g u</kbd><span>go to music</span></div>
@@ -354,10 +399,61 @@
   </div>
 
   <!-- MODAL -->
-  <div class="modal-overlay" id="modal-overlay">
+  <div class="modal-overlay" id="modal-overlay" style="z-index: 9999;">
     <div class="modal-box" id="modal-box"></div>
   </div>
 
+  <!-- UPLOAD MODAL (BAY) -->
+  <div id="uploadModal" class="modal-overlay" style="z-index: 9999;">
+    <div class="modal-box" style="padding: 20px; width: 400px; max-width: 90%;">
+      <div style="font-family:var(--font-display);font-size:20px;color:var(--fg-bright);margin-bottom:16px;">UPLOAD TORRENT</div>
+      <div class="form-group">
+        <label>NAME</label>
+        <input type="text" id="torrentName" placeholder="e.g. Ubuntu 24.04 LTS" style="width:100%">
+      </div>
+      <div class="form-group">
+        <label>MAGNET LINK</label>
+        <input type="text" id="torrentMagnet" placeholder="magnet:?xt=urn:btih:..." style="width:100%">
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div class="form-group" style="flex:1;">
+          <label>CATEGORY</label>
+          <select id="torrentCategory" style="width:100%; border:1px solid var(--border); background:var(--input-bg); color:var(--fg); padding:6px; font-family:var(--font-mono); font-size:12px;">
+            <option value="other">OTHER</option>
+            <option value="video">VIDEO</option>
+            <option value="audio">AUDIO</option>
+            <option value="software">SOFTWARE</option>
+            <option value="games">GAMES</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>SIZE (Optional)</label>
+          <input type="text" id="torrentSize" placeholder="2.1 GB" style="width:100%">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>DESCRIPTION (Optional)</label>
+        <input type="text" id="torrentDesc" placeholder="..." style="width:100%">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button class="btn-sm" onclick="closeBayUploadModal()">CANCEL</button>
+        <button class="btn-primary" onclick="submitBayUpload()">SHARE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DETAIL PANEL (BAY) -->
+  <div id="detailPanel" class="modal-overlay" style="z-index: 9999;">
+    <div class="modal-box" style="padding: 20px; width: 500px; max-width: 90%; position:relative;">
+      <button class="btn-sm" onclick="closeBayDetailPanel()" style="position:absolute; top:12px; right:12px;">✕</button>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <script src="shogun-core.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/shogun-relays@latest/browser.js"></script>
+  <script src="gunbay.js"></script>
+  <script src="bay-app.js"></script>
   <script>
     // ═══════════════════════════════════════════
     //  GUN INIT - relay peers aggiornati
@@ -373,6 +469,10 @@
     });
     const SEA = Gun.SEA;
     const gUser = gun.user();
+    
+    // Export to window so external modules like bay-app.js can use them
+    window.gun = gun;
+    window.gUser = gUser;
 
     // ═══════════════════════════════════════════
     //  STATE
@@ -387,6 +487,7 @@
       onlineUsers: {}, trendingTopics: {}, allUsers: {},
       inboxItems: [], sentItems: [],
     };
+    window.state = state;
 
     // ═══════════════════════════════════════════
     //  YOUTUBE UTILS
@@ -583,6 +684,7 @@
       if (view === 'topics') renderTopics();
       if (view === 'music') renderMusicFeed();
       if (view === 'mail') { showMailFolder('inbox'); }
+      if (view === 'bay') { renderTorrents(); }
     }
 
     function updateClock() {
