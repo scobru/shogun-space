@@ -25,7 +25,15 @@
 
   <!-- AUTH -->
   <div id="auth-screen">
-    <div class="auth-logo">SHOGUN<span style="color:var(--accent)"> SPACE</span></div>
+    <div class="auth-logo">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"
+        style="height: 48px; vertical-align: middle; margin-right: 12px; filter: drop-shadow(0 0 8px var(--accent-glow));">
+        <path fill="var(--accent)"
+          d="M23.7,-34.6C34.4,-34.8,49.4,-36,53.2,-30.4C57,-24.8,49.5,-12.4,41.3,-4.7C33.2,3,24.4,6,18.2,7.4C12.1,8.8,8.5,8.6,5.9,8C3.2,7.4,1.6,6.4,-2.7,11.1C-7.1,15.8,-14.1,26.3,-14.2,25.4C-14.3,24.6,-7.5,12.5,-17.5,6.3C-27.5,0.2,-54.3,0.1,-55.5,-0.7C-56.7,-1.5,-32.2,-2.9,-19.9,-5.2C-7.7,-7.4,-7.6,-10.3,-6.4,-15.5C-5.1,-20.8,-2.5,-28.3,2,-31.7C6.5,-35.1,13,-34.4,23.7,-34.6Z"
+          transform="translate(100 100)" />
+      </svg>
+      SHOGUN<span style="color:var(--accent)"> SPACE</span>
+    </div>
     <div class="auth-sub">decentralized social network</div>
     <div class="auth-box">
       <div class="auth-tabs">
@@ -55,7 +63,8 @@
           <button class="btn-sm" onclick="switchAdvancedMode('pair')">SEA PAIR</button>
           <button class="btn-sm" onclick="doWeb3Login()">WEB3 / ETH</button>
           <button class="btn-sm" onclick="doNostrLogin()">NOSTR</button>
-          <button class="btn-sm" onclick="doWebAuthnLogin()" style="grid-column: span 2;">BIOMETRIC (WEBAUTHN)</button>
+          <button class="btn-sm" onclick="doWebAuthnLogin()">BIOMETRIC LOGIN</button>
+          <button class="btn-sm" onclick="doWebAuthnSignUp()">BIOMETRIC REGISTER</button>
         </div>
 
         <div id="advanced-seed" class="hidden">
@@ -87,7 +96,15 @@
   <!-- APP -->
   <div id="app" class="hidden">
     <div id="topbar">
-      <div class="logo">SHOGUN<span>SPACE</span></div>
+      <div class="logo">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"
+          style="height: 24px; vertical-align: middle; margin-right: 8px;">
+          <path fill="var(--accent)"
+            d="M23.7,-34.6C34.4,-34.8,49.4,-36,53.2,-30.4C57,-24.8,49.5,-12.4,41.3,-4.7C33.2,3,24.4,6,18.2,7.4C12.1,8.8,8.5,8.6,5.9,8C3.2,7.4,1.6,6.4,-2.7,11.1C-7.1,15.8,-14.1,26.3,-14.2,25.4C-14.3,24.6,-7.5,12.5,-17.5,6.3C-27.5,0.2,-54.3,0.1,-55.5,-0.7C-56.7,-1.5,-32.2,-2.9,-19.9,-5.2C-7.7,-7.4,-7.6,-10.3,-6.4,-15.5C-5.1,-20.8,-2.5,-28.3,2,-31.7C6.5,-35.1,13,-34.4,23.7,-34.6Z"
+            transform="translate(100 100)" />
+        </svg>
+        SHOGUN<span>SPACE</span>
+      </div>
       <div id="nav-links">
         <button class="nav-btn active" onclick="navigate('feed')" id="nav-feed">FEED</button>
         <button class="nav-btn" onclick="navigate('chat')" id="nav-chat">CHAT</button>
@@ -626,6 +643,19 @@
         if (result.success) {
           state.me = result.username || conn.address;
           state.pair = result.sea || gUser._.sea;
+          // Ensure profile exists for Web3/External login
+          gun.get('users').get(state.me).once(p => {
+            if (!p) {
+              gun.get('users').get(state.me).put({
+                username: state.me,
+                bio: 'Web3 verified user',
+                joined: Date.now(),
+                pub: state.pair.pub,
+                epub: state.pair.epub
+              });
+            }
+          });
+
           onLoggedIn();
         } else {
           setAuthError('WEB3 AUTH FAILED: ' + result.error);
@@ -649,6 +679,19 @@
         if (result.success) {
           state.me = result.username || conn.address;
           state.pair = result.sea || gUser._.sea;
+          // Ensure profile exists for Nostr/External login
+          gun.get('users').get(state.me).once(p => {
+            if (!p) {
+              gun.get('users').get(state.me).put({
+                username: state.me,
+                bio: 'Nostr verified user',
+                joined: Date.now(),
+                pub: state.pair.pub,
+                epub: state.pair.epub
+              });
+            }
+          });
+
           onLoggedIn();
         } else {
           setAuthError('NOSTR AUTH FAILED: ' + result.error);
@@ -677,6 +720,40 @@
         }
       } catch (err) {
         setAuthError('WEBAUTHN ERROR: ' + err.message);
+      }
+    }
+
+    async function doWebAuthnSignUp() {
+      const user = prompt("Enter username to REGISTER with Biometrics:");
+      if (!user) return;
+
+      setAuthError('WEBAUTHN REGISTERING...');
+      try {
+        const authPlugin = shogun.getAuthenticationMethod('webauthn');
+        if (!authPlugin) throw new Error('WebAuthn Plugin not found');
+
+        // Create passkey and register user
+        const result = await authPlugin.signUp(user);
+        if (result.success) {
+          state.me = user;
+          state.pair = result.sea || gUser._.sea;
+
+          // Save default profile
+          gun.get('users').get(user).put({
+            username: user,
+            bio: 'Biometric verified user',
+            joined: Date.now(),
+            pub: state.pair.pub,
+            epub: state.pair.epub
+          });
+
+          onLoggedIn();
+          if (result.message) alert(result.message); // Show seed phrase if generated
+        } else {
+          setAuthError('WEBAUTHN REGISTRATION FAILED: ' + result.error);
+        }
+      } catch (err) {
+        setAuthError('WEBAUTHN SIGNUP ERROR: ' + err.message);
       }
     }
 
@@ -822,7 +899,9 @@
     // Username valido: solo lettere minuscole, numeri, _ e -
     // Filtra via chiavi Gun interne, indirizzi eth, pub keys, ecc.
     function isValidUsername(str) {
-      return typeof str === 'string' && /^[a-z0-9_-]{1,32}$/.test(str);
+      if (typeof str !== 'string') return false;
+      // Classic usernames, ETH addresses (0x...), Nostr/Long identifiers
+      return /^[a-z0-9_-]{1,32}$/i.test(str) || /^0x[a-fA-F0-9]{40}$/.test(str) || /^[a-z0-9_-]{40,70}$/i.test(str);
     }
 
     // Debounce per evitare 1K+ DOM updates/second su relay con molti dati
