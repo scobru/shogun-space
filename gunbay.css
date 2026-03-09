@@ -1,52 +1,49 @@
 ﻿/* ===========================
-   GunBay â€” Dark Minimalist Theme
+   GunBay — Modern Dark Theme
+   Aligned with Shogun Ecosystem
    =========================== */
 
 :root {
   --bg-primary: var(--bg);
-  --bg-secondary: var(--input-bg);
+  --bg-secondary: var(--bg-secondary, #111827);
   --bg-tertiary: var(--input-bg);
-  --bg-card: var(--input-bg);
-  --bg-hover: #1e1e2e;
+  --bg-card: var(--bg-secondary, #111827);
+  --bg-hover: var(--input-bg, #0f172a);
   --bg-input: var(--input-bg);
   --border: var(--border);
-  --border-light: #333348;
+  --border-light: var(--border-bright, #334155);
 
   --text-primary: var(--fg-bright);
   --text-secondary: var(--fg);
   --text-muted: var(--fg-dim);
 
-  --accent: var(--fg-bright);
-  --accent-dim: #00c88a;
-  --accent-glow: rgba(0, 229, 160, 0.15);
-  --accent-secondary: #00d4ff;
+  --accent: var(--accent, #25d366);
+  --accent-dim: var(--accent-dim, #1da851);
+  --accent-glow: var(--accent-glow, rgba(37, 211, 102, 0.15));
+  --accent-secondary: var(--accent2, #34b7f1);
 
-  --danger: #ff4466;
-  --danger-glow: rgba(255, 68, 102, 0.15);
-  --warning: #ffaa22;
-  --success: #00e5a0;
+  --danger: #ef4444;
+  --danger-glow: rgba(239, 68, 68, 0.15);
+  --warning: #f59e0b;
+  --success: #22c55e;
 
   --cat-video: #ff6b9d;
   --cat-audio: #c084fc;
   --cat-software: #60a5fa;
   --cat-games: #f59e0b;
-  --cat-other: #9898b0;
+  --cat-other: #94a3b8;
 
   --radius: 8px;
   --radius-lg: 12px;
   --transition: 0.2s ease;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
-  --font-body: "Inter", -apple-system, sans-serif;
+  --font-body: "Google Sans Flex", "Inter", -apple-system, sans-serif;
 }
-
-
 
 html {
   font-size: 15px;
   scroll-behavior: smooth;
 }
-
-
 
 ::selection {
   background: var(--accent);
@@ -61,8 +58,9 @@ html {
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(12px);
-  background: rgba(18, 18, 26, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(11, 15, 25, 0.88);
 }
 
 .header-inner {
@@ -88,7 +86,7 @@ html {
 }
 
 .logo h1 {
-  font-family: var(--font-main);
+  font-family: var(--font-body);
   font-size: 1.4rem;
   font-weight: 700;
   letter-spacing: -0.5px;
@@ -1187,7 +1185,3 @@ html {
     gap: 0.2rem;
   }
 }
-
-
-
-

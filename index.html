@@ -4,29 +4,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GUNSPACE // decentralized terminal social</title>
+  <title>Space | shogun-eco</title>
+  <link rel="icon" type="image/svg+xml" href="./logo.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&family=Google+Sans+Flex:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/lib/then.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/lib/webrtc.js"></script>
-  
+
   <link href="./style.css" rel="stylesheet">
 
-  
+
 </head>
 
-<body data-theme="phosphor">
+<body data-theme="shogun">
 
   <!-- AUTH -->
   <div id="auth-screen">
-    <div class="auth-logo">GUNSPACE</div>
-    <div class="auth-sub">// decentralized terminal social network //</div>
+    <div class="auth-logo">SHOGUN<span style="color:var(--accent)"> SPACE</span></div>
+    <div class="auth-sub">decentralized social network</div>
     <div class="auth-box">
       <div class="auth-tabs">
         <button class="auth-tab active" onclick="switchAuthTab('login')">[ LOGIN ]</button>
         <button class="auth-tab" onclick="switchAuthTab('register')">[ REGISTER ]</button>
+        <button class="auth-tab" onclick="switchAuthTab('advanced')">[ ADVANCED ]</button>
       </div>
       <div id="login-form">
         <div class="form-group"><label>USERNAME</label><input type="text" id="login-user" placeholder="@username"
@@ -44,23 +49,51 @@
             placeholder="lurker, builder, dreamer..." /></div>
         <button class="btn-primary" onclick="doRegister()">CREATE IDENTITY</button>
       </div>
+      <div id="advanced-form" class="hidden">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+          <button class="btn-sm" onclick="switchAdvancedMode('seed')">SEED PHRASE</button>
+          <button class="btn-sm" onclick="switchAdvancedMode('pair')">SEA PAIR</button>
+          <button class="btn-sm" onclick="doWeb3Login()">WEB3 / ETH</button>
+          <button class="btn-sm" onclick="doNostrLogin()">NOSTR</button>
+          <button class="btn-sm" onclick="doWebAuthnLogin()" style="grid-column: span 2;">BIOMETRIC (WEBAUTHN)</button>
+        </div>
+
+        <div id="advanced-seed" class="hidden">
+          <div class="form-group"><label>USERNAME</label><input type="text" id="seed-user" placeholder="@username" />
+          </div>
+          <div class="form-group"><label>12-WORD SEED PHRASE</label>
+            <textarea id="seed-input" placeholder="word1 word2 ... word12"
+              style="width:100%; height: 60px; background: var(--input-bg); border: 1px solid var(--border); color: var(--fg); font-family: var(--font-mono); font-size: 11px; padding: 6px;"></textarea>
+          </div>
+          <button class="btn-primary" onclick="doSeedLogin()">RESTORE VIA SEED</button>
+        </div>
+
+        <div id="advanced-pair" class="hidden">
+          <div class="form-group"><label>USERNAME</label><input type="text" id="pair-user" placeholder="@username" />
+          </div>
+          <div class="form-group"><label>SEA PAIR JSON</label>
+            <textarea id="pair-input" placeholder='{"pub":"...", "priv":"...", ...}'
+              style="width:100%; height: 60px; background: var(--input-bg); border: 1px solid var(--border); color: var(--fg); font-family: var(--font-mono); font-size: 11px; padding: 6px;"></textarea>
+          </div>
+          <button class="btn-primary" onclick="doPairLogin()">IMPORT KEYS</button>
+        </div>
+      </div>
       <div class="auth-error" id="auth-error"></div>
     </div>
-    <div style="font-size:11px;color:var(--fg-dim);text-align:center;">powered by GunDB · decentralized · no servers ·
-      your keys, your data</div>
+    <div style="font-size:11px;color:var(--fg-dim);text-align:center;opacity:0.7;">powered by GunDB · decentralized · no
+      servers · your keys, your data</div>
   </div>
 
   <!-- APP -->
   <div id="app" class="hidden">
     <div id="topbar">
-      <div class="logo">GUN<span>SPACE</span></div>
+      <div class="logo">SHOGUN<span>SPACE</span></div>
       <div id="nav-links">
         <button class="nav-btn active" onclick="navigate('feed')" id="nav-feed">FEED</button>
-        <button class="nav-btn" onclick="navigate('music')" id="nav-music">♬ MUSIC</button>
         <button class="nav-btn" onclick="navigate('chat')" id="nav-chat">CHAT</button>
         <button class="nav-btn" onclick="navigate('mail')" id="nav-mail">GUNMAIL <span class="badge hidden"
             id="mail-badge">0</span></button>
-        <button class="nav-btn" onclick="navigate('bay')" id="nav-bay">🏴‍☠️ THE BAY</button>
+        <button class="nav-btn" onclick="navigate('bay')" id="nav-bay">THE BAY</button>
         <button class="nav-btn" onclick="navigate('topics')" id="nav-topics">TOPICS</button>
         <button class="nav-btn" onclick="navigate('notes')" id="nav-notes">NOTES</button>
         <button class="nav-btn" onclick="navigate('settings')" id="nav-settings">SETTINGS</button>
@@ -98,12 +131,11 @@
           </div>
           <div class="compose-area">
             <textarea id="compose-text"
-              placeholder="what's on your mind? paste a YouTube link for the music feed! (press n)"
-              maxlength="500"></textarea>
+              placeholder="what's on your mind? paste a YouTube link for the music feed! (press n)"></textarea>
             <div class="compose-bottom">
               <div style="display:flex;gap:8px;align-items:center;">
                 <input class="topics-input" id="compose-topics" placeholder="#topic1 #topic2 #topic3" />
-                <span class="char-count" id="char-count">500</span>
+                <span class="char-count" id="char-count">0</span>
               </div>
               <button class="btn-post" onclick="submitPost()">TRANSMIT ▶</button>
             </div>
@@ -111,24 +143,6 @@
           <div id="feed-posts"></div>
         </div>
 
-        <!-- MUSIC FEED -->
-        <div id="music-view" class="view hidden">
-          <div
-            style="padding:10px 16px;border-bottom:1px solid var(--border);background:var(--input-bg);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;">
-            <span
-              style="font-family:var(--font-display);font-size:24px;color:var(--fg-bright);text-shadow:var(--glow);">♬
-              MUSIC FEED</span>
-            <div style="display:flex;align-items:flex-end;gap:2px;height:16px;" id="header-eq">
-              <div class="eq-bar" style="height:6px"></div>
-              <div class="eq-bar" style="height:12px"></div>
-              <div class="eq-bar" style="height:4px"></div>
-              <div class="eq-bar" style="height:16px"></div>
-              <div class="eq-bar" style="height:8px"></div>
-            </div>
-            <span style="font-size:10px;color:var(--fg-dim);letter-spacing:2px;">// CLICK A TRACK TO PLAY AUDIO</span>
-          </div>
-          <div class="music-grid" id="music-posts"></div>
-        </div>
 
         <!-- CHAT -->
         <div id="chat-view" class="view hidden">
@@ -175,16 +189,21 @@
 
         <!-- BAY -->
         <div id="bay-view" class="view hidden">
-          <div style="padding:10px 16px;border-bottom:1px solid var(--border);background:var(--input-bg);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10; justify-content: space-between;">
+          <div
+            style="padding:10px 16px;border-bottom:1px solid var(--border);background:var(--input-bg);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10; justify-content: space-between;">
             <div style="display:flex;align-items:center;gap:12px;">
-              <span style="font-family:var(--font-display);font-size:24px;color:var(--fg-bright);text-shadow:var(--glow);">🏴‍☠️ THE BAY</span>
+              <span
+                style="font-family:var(--font-display);font-size:24px;color:var(--fg-bright);text-shadow:var(--glow);">🏴‍☠️
+                THE BAY</span>
               <span style="font-size:10px;color:var(--fg-dim);letter-spacing:2px;">// DECENTRALIZED TORRENT INDEX</span>
             </div>
             <div class="search-box bay-search" style="display:flex;align-items:center;position:relative;">
-              <input type="text" id="searchInput" placeholder="/ search torrents..." autocomplete="off" style="width:250px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);color:var(--fg);font-family:var(--font-mono);font-size:12px;">
+              <input type="text" id="searchInput" placeholder="/ search torrents..." autocomplete="off"
+                style="width:250px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);color:var(--fg);font-family:var(--font-mono);font-size:12px;">
             </div>
           </div>
-          <div style="padding: 12px 16px; display:flex; gap:8px; border-bottom:1px solid var(--border); background:var(--bg); align-items:center;">
+          <div
+            style="padding: 12px 16px; display:flex; gap:8px; border-bottom:1px solid var(--border); background:var(--bg); align-items:center;">
             <button class="btn-sm cat-btn active" data-cat="all">ALL</button>
             <button class="btn-sm cat-btn" data-cat="video">🎬 VIDEO</button>
             <button class="btn-sm cat-btn" data-cat="audio">🎵 AUDIO</button>
@@ -192,11 +211,11 @@
             <button class="btn-sm cat-btn" data-cat="games">🎮 GAMES</button>
             <button class="btn-sm cat-btn" data-cat="other">📦 OTHER</button>
             <div style="margin-left:auto; display:flex; align-items:center; gap: 12px;">
-                <span style="font-size:12px;color:var(--fg-dim);" id="torrentCount">0 torrents</span>
-                <button class="btn-primary" id="uploadBtn" onclick="openBayUploadModal()">+ UPLOAD</button>
+              <span style="font-size:12px;color:var(--fg-dim);" id="torrentCount">0 torrents</span>
+              <button class="btn-primary" id="uploadBtn" onclick="openBayUploadModal()">+ UPLOAD</button>
             </div>
           </div>
-          
+
           <div style="padding: 16px; overflow-x:auto;">
             <table class="torrent-table" style="width:100%; text-align:left; border-collapse:collapse;">
               <thead>
@@ -210,7 +229,9 @@
                 </tr>
               </thead>
               <tbody id="torrentList" style="font-size:13px;">
-                <tr class="empty-row"><td colspan="6" style="text-align:center; padding: 20px; color:var(--fg-dim);">No torrents yet.</td></tr>
+                <tr class="empty-row">
+                  <td colspan="6" style="text-align:center; padding: 20px; color:var(--fg-dim);">No torrents yet.</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -273,8 +294,8 @@
             <div class="settings-section">
               <h3>THEME</h3>
               <div class="theme-grid" id="theme-grid">
-                <div class="theme-card" data-theme="phosphor" onclick="setTheme('phosphor')"
-                  style="background:#0a0a0a;color:#33ff33;border-color:#33ff33">GREEN</div>
+                <div class="theme-card" data-theme="shogun" onclick="setTheme('shogun')"
+                  style="background:#0b0f19;color:#25D366;border-color:#25D366">SHOGUN</div>
                 <div class="theme-card" data-theme="amber" onclick="setTheme('amber')"
                   style="background:#0d0800;color:#ffb000;border-color:#ffb000">AMBER</div>
                 <div class="theme-card" data-theme="matrix" onclick="setTheme('matrix')"
@@ -290,9 +311,9 @@
             <div class="settings-section">
               <h3>DISPLAY</h3>
               <div class="settings-row"><label>SCANLINES</label><input type="checkbox" class="toggle"
-                  id="toggle-scanlines" onchange="toggleScanlines(this.checked)" checked /></div>
+                  id="toggle-scanlines" onchange="toggleScanlines(this.checked)" /></div>
               <div class="settings-row"><label>CRT FLICKER</label><input type="checkbox" class="toggle"
-                  id="toggle-flicker" onchange="toggleFlicker(this.checked)" checked /></div>
+                  id="toggle-flicker" onchange="toggleFlicker(this.checked)" /></div>
               <div class="settings-row">
                 <label>FONT SIZE</label>
                 <select class="settings-input" style="width:120px" onchange="setFontSize(this.value)">
@@ -305,7 +326,7 @@
             <div class="settings-section">
               <h3>ABOUT</h3>
               <div style="font-size:12px;color:var(--fg-dim);line-height:1.8;">
-                GUNSPACE // decentralized terminal social network<br>
+                Shogun Space — decentralized social network<br>
                 powered by GunDB · p2p · no central server<br>
                 your keypair = your identity · encrypted DMs<br>
                 open source · self-hostable · censorship-resistant
@@ -352,7 +373,6 @@
         <div class="shortcut-row"><kbd>g b</kbd><span>go to bay</span></div>
         <div class="shortcut-row"><kbd>g t</kbd><span>go to topics</span></div>
         <div class="shortcut-row"><kbd>g n</kbd><span>go to notes</span></div>
-        <div class="shortcut-row"><kbd>g u</kbd><span>go to music</span></div>
         <div class="shortcut-row"><kbd>b</kbd><span>bookmark post</span></div>
         <div class="shortcut-row"><kbd>p</kbd><span>open profile</span></div>
         <div class="shortcut-row"><kbd>Esc</kbd><span>close overlay</span></div>
@@ -369,34 +389,6 @@
     <div class="search-results" id="search-results"></div>
   </div>
 
-  <!-- HIDDEN YT PLAYER -->
-  <div id="yt-hidden">
-    <div id="yt-player-div"></div>
-  </div>
-
-  <!-- BOTTOM PLAYER BAR -->
-  <div id="bottom-player">
-    <img class="player-thumb" id="player-thumb" src="" alt="" />
-    <div class="player-info">
-      <div class="player-caption" id="player-caption">—</div>
-      <div class="player-author" id="player-author"></div>
-    </div>
-    <div class="player-controls">
-      <button class="player-btn" onclick="playerPrev()" title="Previous" aria-label="Previous Track">&#9664;&#9664;</button>
-      <button class="player-btn main-play" id="player-play-btn" onclick="playerToggle()" title="Play/Pause" aria-label="Play">&#9654;</button>
-      <button class="player-btn" onclick="playerNext()" title="Next" aria-label="Next Track">&#9654;&#9654;</button>
-      <div class="player-eq" id="player-eq">
-        <div class="eq-bar" style="height:5px"></div>
-        <div class="eq-bar" style="height:10px"></div>
-        <div class="eq-bar" style="height:4px"></div>
-        <div class="eq-bar" style="height:14px"></div>
-        <div class="eq-bar" style="height:7px"></div>
-      </div>
-      <a class="player-btn" id="player-yt-link" href="#" target="_blank" title="Open on YouTube"
-        style="text-decoration:none;font-size:12px;">YT</a>
-    </div>
-    <button class="player-btn player-close" onclick="playerClose()" title="Close" aria-label="Close Player">✕</button>
-  </div>
 
   <!-- MODAL -->
   <div class="modal-overlay" id="modal-overlay" style="z-index: 9999;">
@@ -406,7 +398,8 @@
   <!-- UPLOAD MODAL (BAY) -->
   <div id="uploadModal" class="modal-overlay" style="z-index: 9999;">
     <div class="modal-box" style="padding: 20px; width: 400px; max-width: 90%;">
-      <div style="font-family:var(--font-display);font-size:20px;color:var(--fg-bright);margin-bottom:16px;">UPLOAD TORRENT</div>
+      <div style="font-family:var(--font-display);font-size:20px;color:var(--fg-bright);margin-bottom:16px;">UPLOAD
+        TORRENT</div>
       <div class="form-group">
         <label>NAME</label>
         <input type="text" id="torrentName" placeholder="e.g. Ubuntu 24.04 LTS" style="width:100%">
@@ -418,7 +411,8 @@
       <div style="display:flex; gap:12px;">
         <div class="form-group" style="flex:1;">
           <label>CATEGORY</label>
-          <select id="torrentCategory" style="width:100%; border:1px solid var(--border); background:var(--input-bg); color:var(--fg); padding:6px; font-family:var(--font-mono); font-size:12px;">
+          <select id="torrentCategory"
+            style="width:100%; border:1px solid var(--border); background:var(--input-bg); color:var(--fg); padding:6px; font-family:var(--font-mono); font-size:12px;">
             <option value="other">OTHER</option>
             <option value="video">VIDEO</option>
             <option value="audio">AUDIO</option>
@@ -469,10 +463,19 @@
     });
     const SEA = Gun.SEA;
     const gUser = gun.user();
-    
+
     // Export to window so external modules like bay-app.js can use them
     window.gun = gun;
     window.gUser = gUser;
+
+    // SHOGUN CORE INIT
+    const shogun = window.Shogun({
+      gunInstance: gun,
+      web3: { enabled: true },
+      nostr: { enabled: true },
+      webauthn: { enabled: true }
+    });
+    window.shogun = shogun;
 
     // ═══════════════════════════════════════════
     //  STATE
@@ -489,118 +492,8 @@
     };
     window.state = state;
 
-    // ═══════════════════════════════════════════
-    //  YOUTUBE UTILS
-    // ═══════════════════════════════════════════
-    const YT_RE = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?(?:[^&]*&)*v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/g;
 
-    function extractYouTubeIds(text) {
-      const ids = [];
-      let m;
-      YT_RE.lastIndex = 0;
-      while ((m = YT_RE.exec(text)) !== null) ids.push(m[1]);
-      return [...new Set(ids)];
-    }
 
-    function hasYouTube(text) { YT_RE.lastIndex = 0; return YT_RE.test(text); }
-
-    function ytThumbnail(id) { return `https://img.youtube.com/vi/${id}/mqdefault.jpg`; }
-
-    // ═══════════════════════════════════════════
-    //  YOUTUBE IFRAME API + BOTTOM PLAYER
-    // ═══════════════════════════════════════════
-    let ytPlayer = null;
-    let ytReady = false;
-    const player = {
-      queue: [],      // array of {id, caption, author}
-      current: -1,
-      playing: false,
-    };
-
-    // Load YouTube IFrame API once
-    (function loadYTApi() {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      document.head.appendChild(tag);
-    })();
-
-    // Called by YouTube API when ready
-    window.onYouTubeIframeAPIReady = function () {
-      ytPlayer = new YT.Player('yt-player-div', {
-        height: '1', width: '1',
-        playerVars: { autoplay: 0, controls: 0, rel: 0, fs: 0, modestbranding: 1 },
-        events: {
-          onReady: () => { ytReady = true; },
-          onStateChange: (e) => {
-            if (e.data === YT.PlayerState.ENDED) playerNext();
-            if (e.data === YT.PlayerState.PLAYING) { player.playing = true; updatePlayerUI(); }
-            if (e.data === YT.PlayerState.PAUSED) { player.playing = false; updatePlayerUI(); }
-          }
-        }
-      });
-    };
-
-    function playerPlay(idx) {
-      if (idx < 0 || idx >= player.queue.length) return;
-      player.current = idx;
-      const track = player.queue[idx];
-      if (!ytReady) { setTimeout(() => playerPlay(idx), 300); return; }
-      ytPlayer.loadVideoById(track.id);
-      ytPlayer.playVideo();
-      player.playing = true;
-      showBottomPlayer(track);
-      renderMusicFeed(); // refresh card states
-    }
-
-    function playerToggle() {
-      if (!ytReady || player.current < 0) return;
-      if (player.playing) { ytPlayer.pauseVideo(); }
-      else { ytPlayer.playVideo(); }
-    }
-
-    function playerNext() {
-      const next = player.current + 1;
-      if (next < player.queue.length) playerPlay(next);
-      else { player.playing = false; updatePlayerUI(); }
-    }
-
-    function playerPrev() {
-      const prev = player.current - 1;
-      if (prev >= 0) playerPlay(prev);
-    }
-
-    function playerClose() {
-      if (ytReady) ytPlayer.stopVideo();
-      player.playing = false;
-      player.current = -1;
-      document.getElementById('bottom-player').classList.remove('visible');
-      document.getElementById('app').classList.remove('has-player');
-      renderMusicFeed();
-    }
-
-    function showBottomPlayer(track) {
-      document.getElementById('player-thumb').src = `https://img.youtube.com/vi/${track.id}/mqdefault.jpg`;
-      document.getElementById('player-caption').textContent = track.caption || track.id;
-      document.getElementById('player-author').textContent = '@' + track.author;
-      document.getElementById('player-yt-link').href = `https://youtu.be/${track.id}`;
-      document.getElementById('bottom-player').classList.add('visible');
-      document.getElementById('app').classList.add('has-player');
-      updatePlayerUI();
-    }
-
-    function updatePlayerUI() {
-      const btn = document.getElementById('player-play-btn');
-      const eqBars = document.querySelectorAll('#player-eq .eq-bar');
-      if (player.playing) {
-        btn.innerHTML = '&#9646;&#9646;';
-        btn.setAttribute('aria-label', 'Pause');
-        eqBars.forEach(b => b.classList.remove('paused'));
-      } else {
-        btn.innerHTML = '&#9654;';
-        btn.setAttribute('aria-label', 'Play');
-        eqBars.forEach(b => b.classList.add('paused'));
-      }
-    }
 
     // ═══════════════════════════════════════════
     //  AUTH
@@ -608,27 +501,46 @@
     function switchAuthTab(tab) {
       document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
       document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
-      document.querySelectorAll('.auth-tab').forEach((t, i) => {
-        t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+      document.getElementById('advanced-form').classList.toggle('hidden', tab !== 'advanced');
+      document.querySelectorAll('.auth-tab').forEach((t) => {
+        t.classList.toggle('active',
+          (t.textContent.includes('LOGIN') && tab === 'login') ||
+          (t.textContent.includes('REGISTER') && tab === 'register') ||
+          (t.textContent.includes('ADVANCED') && tab === 'advanced')
+        );
       });
+      setAuthError('');
+    }
+
+    function switchAdvancedMode(mode) {
+      document.getElementById('advanced-seed').classList.toggle('hidden', mode !== 'seed');
+      document.getElementById('advanced-pair').classList.toggle('hidden', mode !== 'pair');
       setAuthError('');
     }
 
     function setAuthError(msg) { document.getElementById('auth-error').textContent = msg; }
 
-    function doLogin() {
+    async function doLogin() {
       const user = document.getElementById('login-user').value.trim().toLowerCase().replace(/^@/, '');
       const pass = document.getElementById('login-pass').value;
       if (!user || !pass) { setAuthError('USERNAME AND PASSPHRASE REQUIRED'); return; }
       setAuthError('CONNECTING...');
-      gUser.auth(user, pass, ack => {
-        if (ack.err) { setAuthError('AUTH FAILED: ' + ack.err); return; }
-        state.me = user; state.pair = gUser._.sea;
-        onLoggedIn();
-      });
+
+      try {
+        const result = await shogun.login(user, pass);
+        if (result.success) {
+          state.me = user;
+          state.pair = result.sea || gUser._.sea;
+          onLoggedIn();
+        } else {
+          setAuthError('AUTH FAILED: ' + result.error);
+        }
+      } catch (err) {
+        setAuthError('AUTH ERROR: ' + err.message);
+      }
     }
 
-    function doRegister() {
+    async function doRegister() {
       const user = document.getElementById('reg-user').value.trim().toLowerCase().replace(/^@/, '');
       const pass = document.getElementById('reg-pass').value;
       const bio = document.getElementById('reg-bio').value.trim();
@@ -636,22 +548,136 @@
       if (!/^[a-z0-9_-]+$/.test(user)) { setAuthError('USERNAME: LETTERS, NUMBERS, _ - ONLY'); return; }
       if (pass.length < 6) { setAuthError('PASSPHRASE TOO SHORT (min 6)'); return; }
       setAuthError('CREATING IDENTITY...');
-      gUser.create(user, pass, ack => {
-        if (ack.err) { setAuthError('ERROR: ' + ack.err); return; }
-        gUser.auth(user, pass, ack2 => {
-          if (ack2.err) { setAuthError('AUTH FAILED: ' + ack2.err); return; }
-          state.me = user; state.pair = gUser._.sea;
-          // Salva pub E epub — epub è la chiave di cifratura, pub è quella di firma
+
+      try {
+        const result = await shogun.signUp(user, pass);
+        if (result.success) {
+          state.me = user;
+          state.pair = result.sea || gUser._.sea;
+
           gun.get('users').get(user).put({
             username: user,
             bio: bio || '',
             joined: Date.now(),
-            pub: gUser._.sea.pub,
-            epub: gUser._.sea.epub   // <-- fondamentale per E2E mail
+            pub: state.pair.pub,
+            epub: state.pair.epub
           });
           onLoggedIn();
-        });
-      });
+        } else {
+          setAuthError('ERROR: ' + result.error);
+        }
+      } catch (err) {
+        setAuthError('SIGNUP ERROR: ' + err.message);
+      }
+    }
+
+    async function doSeedLogin() {
+      const user = document.getElementById('seed-user').value.trim().toLowerCase().replace(/^@/, '');
+      const seed = document.getElementById('seed-input').value.trim();
+      if (!user || !seed) { setAuthError('USERNAME AND SEED REQUIRED'); return; }
+      setAuthError('DERIVING KEYS...');
+
+      try {
+        const result = await shogun.loginWithSeed(user, seed);
+        if (result.success) {
+          state.me = user;
+          state.pair = result.sea || gUser._.sea;
+          onLoggedIn();
+        } else {
+          setAuthError('SEED AUTH FAILED: ' + result.error);
+        }
+      } catch (err) {
+        setAuthError('SEED ERROR: ' + err.message);
+      }
+    }
+
+    async function doPairLogin() {
+      const user = document.getElementById('pair-user').value.trim().toLowerCase().replace(/^@/, '');
+      const pairText = document.getElementById('pair-input').value.trim();
+      if (!user || !pairText) { setAuthError('USERNAME AND PAIR JSON REQUIRED'); return; }
+
+      try {
+        const pair = JSON.parse(pairText);
+        setAuthError('IMPORTING...');
+        const result = await shogun.loginWithPair(user, pair);
+        if (result.success) {
+          state.me = user;
+          state.pair = pair;
+          onLoggedIn();
+        } else {
+          setAuthError('PAIR AUTH FAILED: ' + result.error);
+        }
+      } catch (err) {
+        setAuthError('PAIR ERROR: ' + (err.name === 'SyntaxError' ? 'INVALID JSON' : err.message));
+      }
+    }
+
+    async function doWeb3Login() {
+      setAuthError('CONNECTING TO WEB3...');
+      try {
+        const authPlugin = shogun.getAuthenticationMethod('web3');
+        if (!authPlugin) throw new Error('Web3 Plugin not found');
+
+        // Connect first to get address
+        const conn = await authPlugin.connectMetaMask();
+        if (!conn.success) throw new Error(conn.error || 'Failed to connect MetaMask');
+
+        const result = await authPlugin.login(conn.address);
+        if (result.success) {
+          state.me = result.username || conn.address;
+          state.pair = result.sea || gUser._.sea;
+          onLoggedIn();
+        } else {
+          setAuthError('WEB3 AUTH FAILED: ' + result.error);
+        }
+      } catch (err) {
+        setAuthError('WEB3 ERROR: ' + err.message);
+      }
+    }
+
+    async function doNostrLogin() {
+      setAuthError('CONNECTING TO NOSTR...');
+      try {
+        const authPlugin = shogun.getAuthenticationMethod('nostr');
+        if (!authPlugin) throw new Error('Nostr Plugin not found');
+
+        // Connect first to get address/pubkey
+        const conn = await authPlugin.connectNostrWallet();
+        if (!conn.success) throw new Error(conn.error || 'Failed to connect Nostr extension');
+
+        const result = await authPlugin.login(conn.address);
+        if (result.success) {
+          state.me = result.username || conn.address;
+          state.pair = result.sea || gUser._.sea;
+          onLoggedIn();
+        } else {
+          setAuthError('NOSTR AUTH FAILED: ' + result.error);
+        }
+      } catch (err) {
+        setAuthError('NOSTR ERROR: ' + err.message);
+      }
+    }
+
+    async function doWebAuthnLogin() {
+      const user = prompt("Enter username for Biometric Authentication:");
+      if (!user) return;
+
+      setAuthError('WEBAUTHN CHALLENGE...');
+      try {
+        const authPlugin = shogun.getAuthenticationMethod('webauthn');
+        if (!authPlugin) throw new Error('WebAuthn Plugin not found');
+
+        const result = await authPlugin.login(user);
+        if (result.success) {
+          state.me = user;
+          state.pair = result.sea || gUser._.sea;
+          onLoggedIn();
+        } else {
+          setAuthError('WEBAUTHN FAILED: ' + result.error);
+        }
+      } catch (err) {
+        setAuthError('WEBAUTHN ERROR: ' + err.message);
+      }
     }
 
     function doLogout() { gUser.leave(); clearHeartbeat(); location.reload(); }
@@ -682,7 +708,6 @@
       document.getElementById('status-view').textContent = view.toUpperCase() + (view === 'feed' ? ' // ' + state.feedTab.toUpperCase() : '');
       if (view === 'profile') renderProfile(params.user || state.me);
       if (view === 'topics') renderTopics();
-      if (view === 'music') renderMusicFeed();
       if (view === 'mail') { showMailFolder('inbox'); }
       if (view === 'bay') { renderTorrents(); }
     }
@@ -806,11 +831,6 @@
       clearTimeout(_feedRenderTimer);
       _feedRenderTimer = setTimeout(renderFeed, 80);
     }
-    let _musicRenderTimer = null;
-    function debouncedRenderMusic() {
-      clearTimeout(_musicRenderTimer);
-      _musicRenderTimer = setTimeout(renderMusicFeed, 150);
-    }
 
     function loadFeed() {
       gun.get(POSTS_NS).map().on((data, id) => {
@@ -822,15 +842,13 @@
 
         const idx = state.posts.findIndex(p => p.id === id);
         const formattedBody = formatPostBody(data.body);
-        const ytIds = extractYouTubeIds(data.body);
         const topicsHtml = (data.topics || '').split(' ').filter(t => t.trim()).map(t => `<span class="topic-tag" onclick="openTopic('${t.replace(/^#/, '')}')">${t}</span>`).join('');
-        const post = { ...data, id, formattedBody, ytIds, topicsHtml };
+        const post = { ...data, id, formattedBody, topicsHtml };
         if (idx >= 0) state.posts[idx] = post; else state.posts.push(post);
         state.posts.sort((a, b) => b.ts - a.ts);
         // Limita a 200 post in memoria per non saturare il DOM
         if (state.posts.length > 200) state.posts = state.posts.slice(0, 200);
         debouncedRenderFeed();
-        if (state.currentView === 'music') debouncedRenderMusic();
         if (data.topics) {
           data.topics.split(' ').forEach(t => {
             t = t.trim().replace(/^#/, ''); if (!t) return;
@@ -883,63 +901,18 @@
         <button class="post-action" onclick="event.stopPropagation();navigate('profile',{user:'${p.author}'})">PROFILE</button>
         <button class="post-action" onclick="event.stopPropagation();replyTo('${p.author}')">REPLY</button>
         ${p.author !== state.me ? `<button class="post-action" onclick="event.stopPropagation();followUser('${p.author}')">${state.following.has(p.author) ? 'UNFOLLOW' : 'FOLLOW'}</button>` : ''}
+        ${p.author === state.me ? `<button class="post-action text-accent" onclick="event.stopPropagation();confirmDeletePost('${p.id}')">DELETE</button>` : ''}
       </div>
     </div>`;
       }).join('');
     }
 
-    // ═══════════════════════════════════════════
-    //  MUSIC FEED
-    // ═══════════════════════════════════════════
-    function renderMusicFeed() {
-      const el = document.getElementById('music-posts');
-      const musicPosts = state.posts.filter(p => (p.ytIds && p.ytIds.length) || hasYouTube(p.body || ''));
-
-      if (!musicPosts.length) {
-        el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">♬</div><h3>NO MUSIC YET</h3><p class="text-dim">share a YouTube link in a post to add music here</p></div>`;
-        return;
-      }
-
-      // Build flat queue of all tracks
-      player.queue = [];
-      musicPosts.forEach(p => {
-        const ids = p.ytIds || extractYouTubeIds(p.body || '');
-        const caption = (p.body || '').replace(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?[^\s]*|youtu\.be\/[^\s]*)/g, '').trim();
-        ids.forEach(id => player.queue.push({ id, caption: caption || id, author: p.author, ts: p.ts }));
-      });
-
-      el.innerHTML = player.queue.map((track, qi) => {
-        const isPlaying = (player.current === qi && player.playing);
-        const isCurrent = (player.current === qi);
-        return `
-    <div class="music-card ${isPlaying ? 'playing' : ''}" id="mcard-${qi}" onclick="playerPlay(${qi})"
-      role="button" tabindex="0" aria-label="Play ${escHtml(track.caption)}"
-      onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); playerPlay(${qi}); }">
-      <div class="music-card-thumb">
-        <img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" loading="lazy"
-          onerror="this.src='https://img.youtube.com/vi/${track.id}/default.jpg'"/>
-        <div class="music-card-overlay">
-          <div class="play-btn">${isPlaying ? '&#9646;&#9646;' : '&#9654;'}</div>
-        </div>
-        <div class="now-playing-badge">▶ PLAYING</div>
-        <div class="music-card-eq">
-          <div class="eq-bar ${!isPlaying ? 'paused' : ''}" style="height:5px"></div>
-          <div class="eq-bar ${!isPlaying ? 'paused' : ''}" style="height:10px"></div>
-          <div class="eq-bar ${!isPlaying ? 'paused' : ''}" style="height:4px"></div>
-          <div class="eq-bar ${!isPlaying ? 'paused' : ''}" style="height:14px"></div>
-        </div>
-      </div>
-      <div class="music-card-info">
-        <div class="music-card-caption">${escHtml(track.caption) || track.id}</div>
-        <div class="music-card-author" onclick="event.stopPropagation();navigate('profile',{user:'${track.author}'})">@${track.author} · ${timeAgo(track.ts)}</div>
-      </div>
-    </div>`;
-      }).join('');
-    }
 
     function formatPostBody(text) {
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
       return text
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(urlRegex, '<a href="$1" target="_blank" class="post-link">$1</a>')
         .replace(/@([a-z0-9_-]+)/gi, '<span class="mention" onclick="navigate(\'profile\',{user:\'$1\'})">@$1</span>')
         .replace(/#([a-z0-9_-]+)/gi, '<span class="hashtag" onclick="openTopic(\'$1\')">#$1</span>');
     }
@@ -958,15 +931,33 @@
       gun.get('users').get(state.me).get('posts').set(post);
       document.getElementById('compose-text').value = '';
       document.getElementById('compose-topics').value = '';
-      document.getElementById('char-count').textContent = '500';
+      document.getElementById('char-count').textContent = '0';
       const mentions = (body.match(/@([a-z0-9_-]+)/gi) || []).map(m => m.slice(1));
       mentions.forEach(u => { if (u !== state.me) pushNotification(u, 'mention', state.me); });
-      if (hasYouTube(body)) showToast('♬ POST ADDED TO MUSIC FEED');
     }
 
     function replyTo(username) {
       const ta = document.getElementById('compose-text');
       ta.value = '@' + username + ' '; navigate('feed'); ta.focus();
+    }
+
+    function confirmDeletePost(postId) {
+      showModal(`<h3>// DELETE POST?</h3>
+      <p class="text-dim">this action is permanent across the p2p network</p>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn-sm text-accent" onclick="deletePost('${postId}')">DELETE</button>
+        <button class="btn-sm" onclick="hideModal()">CANCEL</button>
+      </div>`);
+    }
+
+    function deletePost(postId) {
+      gun.get(POSTS_NS).get(postId).put(null);
+      // Rimuovi anche dai post dell'utente se presente
+      gUser.get('posts').get(postId).put(null);
+      state.posts = state.posts.filter(p => p.id !== postId);
+      hideModal();
+      showToast('POST DELETED');
+      renderFeed();
     }
 
     // ═══════════════════════════════════════════
@@ -998,6 +989,7 @@
       <div class="post-header">
         <span class="post-author" onclick="navigate('profile',{user:'${p.author}'})">@${p.author}</span>
         <span class="post-time">${timeAgo(p.ts)}</span>
+        ${p.author === state.me ? `<button class="post-action text-accent" style="margin-left:auto" onclick="event.stopPropagation();confirmDeletePost('${p.id}')">DELETE</button>` : ''}
       </div>
       <div class="post-body">${p.formattedBody || formatPostBody(p.body || '')}</div>
     </div>`).join('');
@@ -1345,12 +1337,27 @@
     function renderProfile(username) {
       const el = document.getElementById('profile-content');
       el.innerHTML = '<div class="loading">loading profile</div>';
-      gun.get('users').get(username).once(profile => {
-        if (!profile) { el.innerHTML = '<div class="empty-state"><h3>USER NOT FOUND</h3></div>'; return; }
+
+      let loaded = false;
+      const timeout = setTimeout(() => {
+        if (!loaded) {
+          // Se non caricato dopo 3 secondi, controlla se abbiamo dati in state.allUsers
+          const cached = state.allUsers[username];
+          if (cached && (typeof cached === 'object')) {
+            doRender(cached);
+          } else {
+            el.innerHTML = '<div class="empty-state"><h3>TIMEOUT LOADING PROFILE</h3><p class="text-dim">the data might be unavailable or the network is slow</p><button class="btn-sm" onclick="renderProfile(\'' + username + '\')">RETRY</button></div>';
+          }
+        }
+      }, 4000);
+
+      const doRender = (profile) => {
+        loaded = true;
+        clearTimeout(timeout);
         const isMe = username === state.me;
         const isFollowing = state.following.has(username);
         const userPosts = state.posts.filter(p => p.author === username);
-        const musicPosts = userPosts.filter(p => hasYouTube(p.body || ''));
+        const musicPosts = userPosts.filter(p => (p.body || '').includes('youtube.com') || (p.body || '').includes('youtu.be')); // simple music check
         el.innerHTML = `
       <div class="profile-header">
         <div class="profile-avatar">${username[0].toUpperCase()}</div>
@@ -1372,9 +1379,22 @@
       <div class="panel-title">POSTS</div>
       <div>${userPosts.length ? userPosts.map(p => `
         <div class="post">
-          <div class="post-header"><span class="post-time">${timeAgo(p.ts)}</span></div>
+          <div class="post-header">
+            <span class="post-time">${timeAgo(p.ts)}</span>
+            ${isMe ? `<button class="post-action text-accent" style="margin-left:auto" onclick="event.stopPropagation();confirmDeletePost('${p.id}')">DELETE</button>` : ''}
+          </div>
           <div class="post-body">${p.formattedBody || formatPostBody(p.body || '')}</div>
         </div>`).join('') : '<div class="empty-state"><h3>NO POSTS</h3></div>'}</div>`;
+      };
+
+      gun.get('users').get(username).once(profile => {
+        if (!profile) {
+          loaded = true;
+          clearTimeout(timeout);
+          el.innerHTML = '<div class="empty-state"><h3>USER NOT FOUND</h3></div>';
+          return;
+        }
+        doRender(profile);
       });
     }
 
@@ -1382,8 +1402,15 @@
     //  SETTINGS
     // ═══════════════════════════════════════════
     function loadSettings() {
-      const saved = localStorage.getItem('cs_theme') || 'phosphor';
+      const saved = localStorage.getItem('cs_theme') || 'shogun';
       setTheme(saved, false);
+      // Restore CRT toggles
+      const scanlines = localStorage.getItem('cs_scanlines') === 'true';
+      const flicker = localStorage.getItem('cs_flicker') === 'true';
+      document.getElementById('toggle-scanlines').checked = scanlines;
+      document.getElementById('toggle-flicker').checked = flicker;
+      toggleScanlines(scanlines);
+      toggleFlicker(flicker);
     }
     function setTheme(theme, save = true) {
       document.body.dataset.theme = theme;
@@ -1391,11 +1418,11 @@
       if (save) localStorage.setItem('cs_theme', theme);
     }
     function toggleScanlines(on) {
-      document.body.style.setProperty('--scanline', on ? 'rgba(0,0,0,0.15)' : 'transparent');
+      document.body.classList.toggle('crt-scanlines', on);
       localStorage.setItem('cs_scanlines', on);
     }
     function toggleFlicker(on) {
-      document.getElementById('app').style.animation = on ? 'flicker 8s infinite' : 'none';
+      document.getElementById('app').classList.toggle('crt-flicker', on);
       localStorage.setItem('cs_flicker', on);
     }
     function setFontSize(size) { document.body.style.setProperty('--font-size', size); }
@@ -1489,10 +1516,11 @@
     });
 
     document.getElementById('compose-text')?.addEventListener('input', function () {
-      const len = 500 - this.value.length;
+      const len = this.value.length;
       const el = document.getElementById('char-count');
-      el.textContent = len; el.classList.toggle('warn', len < 50);
+      el.textContent = len;
       // Preview se contiene YouTube
+      const YT_RE = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/gi;
       YT_RE.lastIndex = 0;
       if (YT_RE.test(this.value)) {
         el.textContent = len + ' ♬';

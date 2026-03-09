@@ -17,17 +17,19 @@ class GunBay {
             });
 
         // Initialize Shogun Core
-        this.shogun = new window.ShogunCore.ShogunCore({
-            gunInstance: this.gun,
-            webauthn: {
-                enabled: true,
-                rpName: "GunBay",
-                rpId: window.location.hostname,
-            },
-            web3: {
-                enabled: true
-            }
-        });
+        this.shogun =
+            options.shogun ||
+            new window.ShogunCore.ShogunCore({
+                gunInstance: this.gun,
+                webauthn: {
+                    enabled: true,
+                    rpName: "GunBay",
+                    rpId: window.location.hostname,
+                },
+                web3: {
+                    enabled: true
+                }
+            });
 
         // Dynamically fetch and add more relays if ShogunRelays is available
         if (window.ShogunRelays) {

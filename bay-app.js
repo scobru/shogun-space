@@ -22,7 +22,8 @@
     if (window.GunBay && window.gun && window.state && window.gUser) {
       // Initialize GunBay using the existing gun instance from GunSpace
       gb = new window.GunBay({
-        gun: window.gun, 
+        gun: window.gun,
+        shogun: window.shogun,
         onTorrentsUpdate: () => window.renderTorrents(),
         onFeedbackUpdate: () => window.renderTorrents(),
         onAuthUpdate: (user) => {
@@ -67,12 +68,12 @@
   }
 
   // Expose render function for GunSpace navigation
-  window.renderTorrents = function() {
+  window.renderTorrents = function () {
     if (!gb) return;
-    
+
     // Sync user again just in case
     if (window.state && window.state.me && !gb.currentUser) {
-       gb.currentUser = { alias: window.state.me, pub: window.gUser._.sea.pub };
+      gb.currentUser = { alias: window.state.me, pub: window.gUser._.sea.pub };
     }
 
     const torrentList = document.getElementById('torrentList');
@@ -146,7 +147,7 @@
   };
 
   // Upload Modal
-  window.openBayUploadModal = function() {
+  window.openBayUploadModal = function () {
     if (!window.state || !window.state.me) {
       window.showToast('Login to GunSpace to upload torrents!');
       return;
@@ -155,15 +156,15 @@
     document.getElementById('torrentName').focus();
   };
 
-  window.closeBayUploadModal = function() {
+  window.closeBayUploadModal = function () {
     document.getElementById('uploadModal').classList.remove('show');
   };
 
-  window.submitBayUpload = function() {
+  window.submitBayUpload = function () {
     if (!gb.currentUser && window.state && window.state.me) {
       gb.currentUser = { alias: window.state.me, pub: window.gUser._.sea.pub };
     }
-    
+
     if (!gb.currentUser) {
       window.showToast('Login required!');
       return;
@@ -206,7 +207,7 @@
   };
 
   // Detail Panel
-  window.openBayDetailPanel = function(id) {
+  window.openBayDetailPanel = function (id) {
     const t = gb.allTorrents[id];
     if (!t) return;
     const fb = gb.getFeedbackCounts(id);
@@ -246,11 +247,11 @@
     document.getElementById('detailPanel').classList.add('show');
   };
 
-  window.closeBayDetailPanel = function() {
+  window.closeBayDetailPanel = function () {
     document.getElementById('detailPanel').classList.remove('show');
   };
 
-  window.bayVote = function(id, direction) {
+  window.bayVote = function (id, direction) {
     if (!window.state || !window.state.me) {
       window.showToast('Login to vote!');
       return;
@@ -261,7 +262,7 @@
     gb.vote(id, direction);
   };
 
-  window.deleteBayTorrent = function(id) {
+  window.deleteBayTorrent = function (id) {
     if (!gb.currentUser && window.state && window.state.me) {
       gb.currentUser = { alias: window.state.me, pub: window.gUser._.sea.pub };
     }
