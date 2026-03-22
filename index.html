@@ -804,6 +804,16 @@
     }
     function clearHeartbeat() { clearInterval(heartbeatInterval); }
 
+    // ⚡ Bolt: Debounce online users rendering
+    // 💡 What: Added an 80ms debounce to batch DOM updates for online users list.
+    // 🎯 Why: gun.get('presence').map().on() triggers rapidly for each user on load, causing O(N) synchronous DOM re-renders.
+    // 📊 Impact: Reduces main thread blocking on startup. O(N) renders -> 1 render pass.
+    let _onlineUsersRenderTimer = null;
+    function debouncedRenderOnlineUsers() {
+      clearTimeout(_onlineUsersRenderTimer);
+      _onlineUsersRenderTimer = setTimeout(renderOnlineUsers, 80);
+    }
+
     function loadOnlineUsers() {
       gun.get('presence').map().on((data, key) => {
         if (!data) return;
@@ -811,7 +821,7 @@
         if (!isValidUsername(key)) return;
         const alive = data.online && (Date.now() - data.ts) < 60000;
         if (alive) state.onlineUsers[key] = data; else delete state.onlineUsers[key];
-        renderOnlineUsers();
+        debouncedRenderOnlineUsers();
       });
     }
 
@@ -1511,12 +1521,22 @@
     // ═══════════════════════════════════════════
     //  WHO TO FOLLOW
     // ═══════════════════════════════════════════
+    // ⚡ Bolt: Debounce "who to follow" rendering
+    // 💡 What: Added an 80ms debounce to batch DOM updates for the suggestions list.
+    // 🎯 Why: gun.get('users').map().on() triggers rapidly for each user on load, causing O(N) synchronous DOM re-renders.
+    // 📊 Impact: Significantly reduces DOM operations and CPU load on startup.
+    let _whoToFollowRenderTimer = null;
+    function debouncedRenderWhoToFollow() {
+      clearTimeout(_whoToFollowRenderTimer);
+      _whoToFollowRenderTimer = setTimeout(renderWhoToFollow, 80);
+    }
+
     function loadWhoToFollow() {
       gun.get('users').map().on((data, key) => {
         if (!data) return;
         if (!isValidUsername(key)) return; // filtra metadati Gun
         state.allUsers[key] = data;
-        renderWhoToFollow();
+        debouncedRenderWhoToFollow();
       });
     }
     function renderWhoToFollow() {
