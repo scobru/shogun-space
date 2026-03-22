@@ -311,18 +311,18 @@
             <div class="settings-section">
               <h3>THEME</h3>
               <div class="theme-grid" id="theme-grid">
-                <div class="theme-card" data-theme="shogun" onclick="setTheme('shogun')"
-                  style="background:#0b0f19;color:#25D366;border-color:#25D366">SHOGUN</div>
-                <div class="theme-card" data-theme="amber" onclick="setTheme('amber')"
-                  style="background:#0d0800;color:#ffb000;border-color:#ffb000">AMBER</div>
-                <div class="theme-card" data-theme="matrix" onclick="setTheme('matrix')"
-                  style="background:#000;color:#00ff41;border-color:#00ff41">MATRIX</div>
-                <div class="theme-card" data-theme="ice" onclick="setTheme('ice')"
-                  style="background:#020812;color:#00cfff;border-color:#00cfff">ICE</div>
-                <div class="theme-card" data-theme="c64" onclick="setTheme('c64')"
-                  style="background:#3a30c0;color:#a090ff;border-color:#a090ff">C64</div>
-                <div class="theme-card" data-theme="paper" onclick="setTheme('paper')"
-                  style="background:#f5f0e8;color:#1a1a0a;border-color:#1a1a0a">PAPER</div>
+                <div class="theme-card" role="button" tabindex="0" data-theme="shogun" onclick="setTheme('shogun')" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setTheme('shogun'); }"
+                  style="background:#0b0f19;color:#25D366">SHOGUN</div>
+                <div class="theme-card" role="button" tabindex="0" data-theme="amber" onclick="setTheme('amber')" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setTheme('amber'); }"
+                  style="background:#0d0800;color:#ffb000">AMBER</div>
+                <div class="theme-card" role="button" tabindex="0" data-theme="matrix" onclick="setTheme('matrix')" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setTheme('matrix'); }"
+                  style="background:#000;color:#00ff41">MATRIX</div>
+                <div class="theme-card" role="button" tabindex="0" data-theme="ice" onclick="setTheme('ice')" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setTheme('ice'); }"
+                  style="background:#020812;color:#00cfff">ICE</div>
+                <div class="theme-card" role="button" tabindex="0" data-theme="c64" onclick="setTheme('c64')" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setTheme('c64'); }"
+                  style="background:#3a30c0;color:#a090ff">C64</div>
+                <div class="theme-card" role="button" tabindex="0" data-theme="paper" onclick="setTheme('paper')" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setTheme('paper'); }"
+                  style="background:#f5f0e8;color:#1a1a0a">PAPER</div>
               </div>
             </div>
             <div class="settings-section">
