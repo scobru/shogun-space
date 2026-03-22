@@ -1529,6 +1529,12 @@ body.crt-vignette::after {
   transform: translateY(-1px);
 }
 
+.theme-card:focus-visible {
+  border-color: var(--fg-bright);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+  outline: none;
+}
+
 .settings-row {
   display: flex;
   justify-content: space-between;
